@@ -1,0 +1,27 @@
+{
+  "name": "afsm",
+  "version": "1.0.0",
+  "description": "atomic fsm",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc"
+  },
+  "types": "index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/langhuihui/afsm.git"
+  },
+  "keywords": [
+    "fsm"
+  ],
+  "author": "dexter",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/langhuihui/afsm/issues"
+  },
+  "homepage": "https://github.com/langhuihui/afsm#readme",
+  "dependencies": {
+    "eventemitter3": "^4.0.7"
+  }
+}
