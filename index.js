@@ -43,6 +43,18 @@ export class AFSM extends EventEmitter {
         return !(((_a = this.option) === null || _a === void 0 ? void 0 : _a.quickStart) === false);
     }
     ;
+    get ready() {
+        return new Promise((resolve, reject) => {
+            this.once("startSuccess" /* START_SUCCESS */, resolve);
+            this.once("startFailed" /* START_FAILED */, reject);
+        });
+    }
+    get closed() {
+        return new Promise((resolve, reject) => {
+            this.once("stopSuccess" /* STOP_SUCCESS */, resolve);
+            this.once("stopFailed" /* STOP_FAILED */, reject);
+        });
+    }
     start(...args) {
         var _a;
         if (((_a = this.option) === null || _a === void 0 ? void 0 : _a.parent) && !this.option.parent.running) {

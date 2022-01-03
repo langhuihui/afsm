@@ -27,6 +27,8 @@ export declare class AFSM extends EventEmitter {
     get quickStart(): boolean;
     name: string;
     constructor(option?: AFSMopt | undefined);
+    get ready(): Promise<unknown>;
+    get closed(): Promise<unknown>;
     start(...args: any[]): boolean;
     startSuccess(...args: any[]): boolean;
     startFailed(...args: any[]): boolean;

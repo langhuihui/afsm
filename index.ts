@@ -59,6 +59,18 @@ export class AFSM extends EventEmitter {
       option.parent.on(AFSM_ACTION.STOP, this.stop.bind(this));
     }
   }
+  get ready(){
+    return new Promise((resolve, reject) => {
+      this.once(AFSM_ACTION.START_SUCCESS, resolve);
+      this.once(AFSM_ACTION.START_FAILED, reject);
+    })
+  }
+  get closed(){
+    return new Promise((resolve, reject) => {
+      this.once(AFSM_ACTION.STOP_SUCCESS, resolve);
+      this.once(AFSM_ACTION.STOP_FAILED, reject);
+    })
+  }
   start(...args: any[]) {
     if (this.option?.parent && !this.option.parent.running) {
       return false;
