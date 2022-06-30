@@ -1,106 +1,59 @@
-import { EventEmitter } from 'eventemitter3';
-export const enum AFSM_ACTION {
-  START = 'start',
-  START_SUCCESS = 'startSuccess',
-  START_FAILED = 'startFailed',
-  STOP = 'stop',
-  STOP_SUCCESS = 'stopSuccess',
-  STOP_FAILED = 'stopFailed',
-};
-export const enum AFSM_STATE {
-  IDLE,
-  STARTING,
-  RUNNING,
-  STOPING,
+import EventEmitter from 'eventemitter3';
+export interface IAFSM extends AFSM {
+
 }
-// 四冲程序状态机
-const Transitions = [
-  {
-    [AFSM_ACTION.START]: AFSM_STATE.STARTING,
-  },
-  {
-    [AFSM_ACTION.START_SUCCESS]: AFSM_STATE.RUNNING,
-    [AFSM_ACTION.START_FAILED]: AFSM_STATE.IDLE,
-    [AFSM_ACTION.STOP]: AFSM_STATE.STOPING,
-  },
-  {
-    [AFSM_ACTION.STOP]: AFSM_STATE.STOPING,
-  },
-  {
-    [AFSM_ACTION.STOP_SUCCESS]: AFSM_STATE.IDLE,
-    [AFSM_ACTION.STOP_FAILED]: AFSM_STATE.RUNNING
-  }
-] as const;
-export interface AFSMopt {
-  parent?: AFSM;
-  name?: string;
-  quickStart?: boolean;
-  quickStop?: boolean;
-  // autoStart?: boolean;
+const fromsKey = Symbol('froms');
+export function From(...from: string[]): MethodDecorator {
+  return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => {
+    target[fromsKey] = target[fromsKey] || {};
+    target[fromsKey][propertyKey] = target[fromsKey][propertyKey] || [];
+    target[fromsKey][propertyKey].push(...from);
+  };
 }
-export class AFSM extends EventEmitter {
-  state: AFSM_STATE = AFSM_STATE.IDLE;
-  get running() {
-    return this.state == AFSM_STATE.RUNNING;
-  }
-  // 快速关闭，无需等待
-  get quickStop() {
-    return !(this.option?.quickStop === false);
+export function To(state: string): MethodDecorator {
+  return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => {
+    const origin = descriptor.value;
+    descriptor.value = async function (this: IAFSM, ...arg: any[]) {
+      if (target?.[fromsKey]?.[propertyKey] && (!target[fromsKey][propertyKey].includes(this.state))) {
+        throw new Error(`${propertyKey as string} can not be called in ${this.state}`);
+      }
+      this.state = `${this.state}(${propertyKey as string})${state}`;
+      try {
+        const result = await origin.apply(this, arg);
+        this.state = state;
+        return result;
+      } catch (err) {
+        throw err;
+      }
+    };
   };
-  get quickStart() {
-    return !(this.option?.quickStart === false);
-  };
-  name: string;
-  constructor(public option?: AFSMopt) {
-    super();
-    this.name = option?.name || this.constructor.name;
-    if (option?.parent) {
-      // 级联关闭
-      option.parent.on(AFSM_ACTION.STOP, this.stop.bind(this));
-    }
+}
+export class FSM extends EventEmitter {
+  _state: string = "";
+  static STATECHANGED = 'stateChanged';
+  get state() {
+    return this._state;
   }
-  get ready(){
-    return new Promise((resolve, reject) => {
-      this.once(AFSM_ACTION.START_SUCCESS, resolve);
-      this.once(AFSM_ACTION.START_FAILED, reject);
-    })
+  set state(value: string) {
+    const old = this._state;
+    // console.log(`${this.options.name || this.constructor.name} state change from ${this._state} to ${value}`);
+    this._state = value;
+    this.emit(value, old);
+    this.emit(FSM.STATECHANGED, old, value);
   }
-  get closed(){
-    return new Promise((resolve, reject) => {
-      this.once(AFSM_ACTION.STOP_SUCCESS, resolve);
-      this.once(AFSM_ACTION.STOP_FAILED, reject);
-    })
+}
+export class AFSM extends FSM {
+  static OFF = 'off';
+  static ON = 'on';
+  static INIT = '';
+  @From(AFSM.OFF, AFSM.INIT)
+  @To(AFSM.ON)
+  async start() {
+
   }
-  start(...args: any[]) {
-    if (this.option?.parent && !this.option.parent.running) {
-      return false;
-    }
-    return this.action(AFSM_ACTION.START, ...args) && (!this.quickStart || this.startSuccess(...args));
-  }
-  startSuccess(...args: any[]) {
-    return this.action(AFSM_ACTION.START_SUCCESS, ...args);
-  }
-  startFailed(...args: any[]) {
-    return this.action(AFSM_ACTION.START_FAILED, ...args);
-  }
-  stop(...args: any[]) {
-    return this.action(AFSM_ACTION.STOP, ...args) && (!this.quickStop || this.stopSuccess());
-  }
-  stopSuccess(...args: any[]) {
-    return this.action(AFSM_ACTION.STOP_SUCCESS, ...args);
-  }
-  stopFailed(...args: any[]) {
-    return this.action(AFSM_ACTION.STOP_FAILED, ...args);
-  }
-  private action(event: AFSM_ACTION, ...args: any[]) {
-    // @ts-ignore
-    const to = Transitions[this.state]?.[event];
-    if (typeof to == 'number') {
-      this.state = to;
-      // console.log(this.name, event, from, '->', to, ...args);
-      this.emit(event, ...args);
-      return true;
-    }
-    return false;
+  @From(AFSM.ON)
+  @To(AFSM.OFF)
+  async stop() {
+
   }
 }

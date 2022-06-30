@@ -1,92 +1,84 @@
-import { EventEmitter } from 'eventemitter3';
-;
-// 四冲程序状态机
-const Transitions = [
-    {
-        ["start" /* START */]: 1 /* STARTING */,
-    },
-    {
-        ["startSuccess" /* START_SUCCESS */]: 2 /* RUNNING */,
-        ["startFailed" /* START_FAILED */]: 0 /* IDLE */,
-        ["stop" /* STOP */]: 3 /* STOPING */,
-    },
-    {
-        ["stop" /* STOP */]: 3 /* STOPING */,
-    },
-    {
-        ["stopSuccess" /* STOP_SUCCESS */]: 0 /* IDLE */,
-        ["stopFailed" /* STOP_FAILED */]: 2 /* RUNNING */
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+import EventEmitter from 'eventemitter3';
+const fromsKey = Symbol('froms');
+export function From(...from) {
+    return (target, propertyKey, descriptor) => {
+        target[fromsKey] = target[fromsKey] || {};
+        target[fromsKey][propertyKey] = target[fromsKey][propertyKey] || [];
+        target[fromsKey][propertyKey].push(...from);
+    };
+}
+export function To(state) {
+    return (target, propertyKey, descriptor) => {
+        const origin = descriptor.value;
+        descriptor.value = function (...arg) {
+            var _a;
+            return __awaiter(this, void 0, void 0, function* () {
+                if (((_a = target === null || target === void 0 ? void 0 : target[fromsKey]) === null || _a === void 0 ? void 0 : _a[propertyKey]) && (!target[fromsKey][propertyKey].includes(this.state))) {
+                    throw new Error(`${propertyKey} can not be called in ${this.state}`);
+                }
+                this.state = `${this.state}(${propertyKey})${state}`;
+                try {
+                    const result = yield origin.apply(this, arg);
+                    this.state = state;
+                    return result;
+                }
+                catch (err) {
+                    throw err;
+                }
+            });
+        };
+    };
+}
+export class FSM extends EventEmitter {
+    constructor() {
+        super(...arguments);
+        this._state = "";
     }
-];
-export class AFSM extends EventEmitter {
-    constructor(option) {
-        super();
-        this.option = option;
-        this.state = 0 /* IDLE */;
-        this.name = (option === null || option === void 0 ? void 0 : option.name) || this.constructor.name;
-        if (option === null || option === void 0 ? void 0 : option.parent) {
-            // 级联关闭
-            option.parent.on("stop" /* STOP */, this.stop.bind(this));
-        }
+    get state() {
+        return this._state;
     }
-    get running() {
-        return this.state == 2 /* RUNNING */;
-    }
-    // 快速关闭，无需等待
-    get quickStop() {
-        var _a;
-        return !(((_a = this.option) === null || _a === void 0 ? void 0 : _a.quickStop) === false);
-    }
-    ;
-    get quickStart() {
-        var _a;
-        return !(((_a = this.option) === null || _a === void 0 ? void 0 : _a.quickStart) === false);
-    }
-    ;
-    get ready() {
-        return new Promise((resolve, reject) => {
-            this.once("startSuccess" /* START_SUCCESS */, resolve);
-            this.once("startFailed" /* START_FAILED */, reject);
-        });
-    }
-    get closed() {
-        return new Promise((resolve, reject) => {
-            this.once("stopSuccess" /* STOP_SUCCESS */, resolve);
-            this.once("stopFailed" /* STOP_FAILED */, reject);
-        });
-    }
-    start(...args) {
-        var _a;
-        if (((_a = this.option) === null || _a === void 0 ? void 0 : _a.parent) && !this.option.parent.running) {
-            return false;
-        }
-        return this.action("start" /* START */, ...args) && (!this.quickStart || this.startSuccess(...args));
-    }
-    startSuccess(...args) {
-        return this.action("startSuccess" /* START_SUCCESS */, ...args);
-    }
-    startFailed(...args) {
-        return this.action("startFailed" /* START_FAILED */, ...args);
-    }
-    stop(...args) {
-        return this.action("stop" /* STOP */, ...args) && (!this.quickStop || this.stopSuccess());
-    }
-    stopSuccess(...args) {
-        return this.action("stopSuccess" /* STOP_SUCCESS */, ...args);
-    }
-    stopFailed(...args) {
-        return this.action("stopFailed" /* STOP_FAILED */, ...args);
-    }
-    action(event, ...args) {
-        var _a;
-        // @ts-ignore
-        const to = (_a = Transitions[this.state]) === null || _a === void 0 ? void 0 : _a[event];
-        if (typeof to == 'number') {
-            this.state = to;
-            // console.log(this.name, event, from, '->', to, ...args);
-            this.emit(event, ...args);
-            return true;
-        }
-        return false;
+    set state(value) {
+        const old = this._state;
+        // console.log(`${this.options.name || this.constructor.name} state change from ${this._state} to ${value}`);
+        this._state = value;
+        this.emit(value, old);
+        this.emit(FSM.STATECHANGED, old, value);
     }
 }
+FSM.STATECHANGED = 'stateChanged';
+export class AFSM extends FSM {
+    start() {
+        return __awaiter(this, void 0, void 0, function* () {
+        });
+    }
+    stop() {
+        return __awaiter(this, void 0, void 0, function* () {
+        });
+    }
+}
+AFSM.OFF = 'off';
+AFSM.ON = 'on';
+AFSM.INIT = '';
+__decorate([
+    From(AFSM.OFF, AFSM.INIT),
+    To(AFSM.ON)
+], AFSM.prototype, "start", null);
+__decorate([
+    From(AFSM.ON),
+    To(AFSM.OFF)
+], AFSM.prototype, "stop", null);

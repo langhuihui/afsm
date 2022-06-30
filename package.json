@@ -1,11 +1,12 @@
 {
   "name": "afsm",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "atomic fsm",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "test": " node --loader ts-node/esm index.ts"
   },
   "types": "index.d.ts",
   "repository": {
@@ -23,5 +24,10 @@
   "homepage": "https://github.com/langhuihui/afsm#readme",
   "dependencies": {
     "eventemitter3": "^4.0.7"
+  },
+  "devDependencies": {
+    "@types/node": "*",
+    "ts-node": "^10.8.1",
+    "typescript": "^4.7.4"
   }
 }
