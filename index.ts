@@ -14,29 +14,39 @@ export function To(state: string): MethodDecorator {
   return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => {
     const origin = descriptor.value;
     descriptor.value = async function (this: IAFSM, ...arg: any[]) {
-      if (target?.[fromsKey]?.[propertyKey] && (!target[fromsKey][propertyKey].includes(this.state))) {
-        throw new Error(`${propertyKey as string} can not be called in ${this.state}`);
+      const froms = target?.[fromsKey]?.[propertyKey];
+      if (froms) {
+        if ((!froms.includes(this.state)))
+          throw FSM.ESTATE;
+      } else if (this.abortCtrl) {
+        this.abortCtrl.aborted = true;
       }
       this.state = `${this.state}(${propertyKey as string})${state}`;
-      try {
-        const result = await origin.apply(this, arg);
-        this.state = state;
-        return result;
-      } catch (err) {
-        throw err;
+      const abort = { aborted: false };
+      this.abortCtrl = abort;
+      const result = await origin.apply(this, arg);
+      if (abort.aborted) {
+        throw FSM.EABORT;
+      } else {
+        this.abortCtrl = void 0;
       }
+      this.state = state;
+      return result;
     };
   };
 }
 export class FSM extends EventEmitter {
   _state: string = "";
+  abortCtrl?: { aborted: boolean; };
   static STATECHANGED = 'stateChanged';
+  static EABORT = new Error('abort');
+  static ESTATE = new Error('wrong state');
   get state() {
     return this._state;
   }
   set state(value: string) {
     const old = this._state;
-    // console.log(`${this.options.name || this.constructor.name} state change from ${this._state} to ${value}`);
+    console.log(`${this.constructor.name} state change from ${this._state} to ${value}`);
     this._state = value;
     this.emit(value, old);
     this.emit(FSM.STATECHANGED, old, value);
@@ -54,6 +64,10 @@ export class AFSM extends FSM {
   @From(AFSM.ON)
   @To(AFSM.OFF)
   async stop() {
+
+  }
+  @To(AFSM.OFF)
+  async forceStop() {
 
   }
 }

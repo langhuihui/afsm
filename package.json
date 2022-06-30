@@ -1,12 +1,12 @@
 {
   "name": "afsm",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "atomic fsm",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "test": " node --loader ts-node/esm index.ts"
+    "test": " node --loader ts-node/esm test.ts"
   },
   "types": "index.d.ts",
   "repository": {

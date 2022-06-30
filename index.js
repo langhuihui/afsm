@@ -28,18 +28,26 @@ export function To(state) {
         descriptor.value = function (...arg) {
             var _a;
             return __awaiter(this, void 0, void 0, function* () {
-                if (((_a = target === null || target === void 0 ? void 0 : target[fromsKey]) === null || _a === void 0 ? void 0 : _a[propertyKey]) && (!target[fromsKey][propertyKey].includes(this.state))) {
-                    throw new Error(`${propertyKey} can not be called in ${this.state}`);
+                const froms = (_a = target === null || target === void 0 ? void 0 : target[fromsKey]) === null || _a === void 0 ? void 0 : _a[propertyKey];
+                if (froms) {
+                    if ((!froms.includes(this.state)))
+                        throw FSM.ESTATE;
+                }
+                else if (this.abortCtrl) {
+                    this.abortCtrl.aborted = true;
                 }
                 this.state = `${this.state}(${propertyKey})${state}`;
-                try {
-                    const result = yield origin.apply(this, arg);
-                    this.state = state;
-                    return result;
+                const abort = { aborted: false };
+                this.abortCtrl = abort;
+                const result = yield origin.apply(this, arg);
+                if (abort.aborted) {
+                    throw FSM.EABORT;
                 }
-                catch (err) {
-                    throw err;
+                else {
+                    this.abortCtrl = void 0;
                 }
+                this.state = state;
+                return result;
             });
         };
     };
@@ -54,19 +62,25 @@ export class FSM extends EventEmitter {
     }
     set state(value) {
         const old = this._state;
-        // console.log(`${this.options.name || this.constructor.name} state change from ${this._state} to ${value}`);
+        console.log(`${this.constructor.name} state change from ${this._state} to ${value}`);
         this._state = value;
         this.emit(value, old);
         this.emit(FSM.STATECHANGED, old, value);
     }
 }
 FSM.STATECHANGED = 'stateChanged';
+FSM.EABORT = new Error('abort');
+FSM.ESTATE = new Error('wrong state');
 export class AFSM extends FSM {
     start() {
         return __awaiter(this, void 0, void 0, function* () {
         });
     }
     stop() {
+        return __awaiter(this, void 0, void 0, function* () {
+        });
+    }
+    forceStop() {
         return __awaiter(this, void 0, void 0, function* () {
         });
     }
@@ -82,3 +96,6 @@ __decorate([
     From(AFSM.ON),
     To(AFSM.OFF)
 ], AFSM.prototype, "stop", null);
+__decorate([
+    To(AFSM.OFF)
+], AFSM.prototype, "forceStop", null);
