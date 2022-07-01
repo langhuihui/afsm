@@ -46,7 +46,7 @@ export class FSM extends EventEmitter {
   }
   set state(value: string) {
     const old = this._state;
-    console.log(`${this.constructor.name} state change from ${this._state} to ${value}`);
+    // console.debug(`${this.constructor.name} state change from ${this._state} to ${value}`);
     this._state = value;
     this.emit(value, old);
     this.emit(FSM.STATECHANGED, old, value);
