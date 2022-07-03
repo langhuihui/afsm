@@ -1,24 +1,27 @@
 import EventEmitter from 'eventemitter3';
-export interface IAFSM extends AFSM {
+export interface IAFSM extends FSM {
 }
-export declare function From(...from: string[]): MethodDecorator;
-export declare function To(state: string): MethodDecorator;
+export declare type State = string | MiddleState;
+export declare class MiddleState {
+    oldState: State;
+    newState: string;
+    action: string;
+    constructor(oldState: State, newState: string, action: string);
+    toString(): string;
+}
+export declare function ChangeState(from: string | string[], to: string): (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => void;
 export declare class FSM extends EventEmitter {
-    _state: string;
-    abortCtrl?: {
-        aborted: boolean;
-    };
+    name?: string | undefined;
     static STATECHANGED: string;
     static EABORT: Error;
     static ESTATE: Error;
-    get state(): string;
-    set state(value: string);
-}
-export declare class AFSM extends FSM {
-    static OFF: string;
-    static ON: string;
     static INIT: string;
-    start(): Promise<void>;
-    stop(): Promise<void>;
-    forceStop(): Promise<void>;
+    get stateDiagram(): never[];
+    _state: State;
+    abortCtrl?: {
+        aborted: boolean;
+    };
+    constructor(name?: string | undefined);
+    get state(): State;
+    set state(value: State);
 }

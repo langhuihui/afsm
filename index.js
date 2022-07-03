@@ -1,81 +1,134 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
 import EventEmitter from 'eventemitter3';
-const fromsKey = Symbol('froms');
-export function From(...from) {
-    return (target, propertyKey, descriptor) => {
-        target[fromsKey] = target[fromsKey] || {};
-        target[fromsKey][propertyKey] = target[fromsKey][propertyKey] || [];
-        target[fromsKey][propertyKey].push(...from);
-    };
+// 中间过渡状态
+export class MiddleState {
+    oldState;
+    newState;
+    action;
+    constructor(oldState, newState, action) {
+        this.oldState = oldState;
+        this.newState = newState;
+        this.action = action;
+    }
+    toString() {
+        return `${this.action}ing`;
+    }
 }
-export function To(state) {
+const stateDiagram = new Map();
+export function ChangeState(from, to) {
     return (target, propertyKey, descriptor) => {
+        if (!stateDiagram.has(target)) {
+            stateDiagram.set(target, []);
+            Object.defineProperty(target, 'stateDiagram', {
+                get() {
+                    let result = [];
+                    let plain = [];
+                    let forceTo = [];
+                    const stateConfig = stateDiagram.get(target);
+                    const allState = new Set();
+                    stateConfig.forEach(({ from, to, action }) => {
+                        allState.add(to);
+                        if (typeof from === 'string') {
+                            allState.add(from);
+                            plain.push({ from, to, action });
+                            allState.add(action + "ing");
+                        }
+                        else {
+                            if (from.length) {
+                                from.forEach(f => {
+                                    allState.add(f);
+                                    plain.push({ from: f, to, action });
+                                });
+                                allState.add(action + "ing");
+                            }
+                            else
+                                forceTo.push({ to, action });
+                        }
+                    });
+                    plain.forEach(({ from, to, action }) => {
+                        result.push(`${from} --> ${action}ing : ${action}`, `${action}ing --> ${to} : ${action} 🟢`, `${action}ing --> ${from} : ${action} 🔴`);
+                    });
+                    forceTo.forEach(({ to, action }) => {
+                        result.push(`${action}ing --> ${to} : ${action} 🟢`);
+                        allState.forEach(f => {
+                            if (f !== to)
+                                result.push(`${f} --> ${action}ing : ${action}`);
+                        });
+                    });
+                    return result;
+                }
+            });
+        }
+        stateDiagram.get(target).push({ from, to, action: propertyKey.toString() });
         const origin = descriptor.value;
         descriptor.value = async function (...arg) {
-            const froms = target?.[fromsKey]?.[propertyKey];
-            if (froms) {
-                if ((!froms.includes(this.state)))
+            if (this.state === to || typeof this.state != "string")
+                throw FSM.ESTATE;
+            if (Array.isArray(from)) {
+                if (from.length == 0) {
+                    if (this.abortCtrl)
+                        this.abortCtrl.aborted = true;
+                }
+                else if ((!from.includes(this.state)))
                     throw FSM.ESTATE;
             }
-            else if (this.abortCtrl) {
-                this.abortCtrl.aborted = true;
+            else {
+                if (from !== this.state)
+                    throw FSM.ESTATE;
             }
-            this.state = `${this.state}(${propertyKey})${state}`;
+            const old = this.state;
+            this.state = new MiddleState(old, to, propertyKey);
             const abort = { aborted: false };
             this.abortCtrl = abort;
-            const result = await origin.apply(this, arg);
-            if (abort.aborted) {
-                throw FSM.EABORT;
+            try {
+                const result = await origin.apply(this, arg);
+                if (abort.aborted) {
+                    throw FSM.EABORT;
+                }
+                else {
+                    this.abortCtrl = void 0;
+                }
+                this.state = to;
+                return result;
             }
-            else {
-                this.abortCtrl = void 0;
+            catch (err) {
+                this.state = old;
+                throw err;
             }
-            this.state = state;
-            return result;
         };
     };
 }
+//@ts-ignore
+const hasDevTools = typeof window !== 'undefined' && window['__AFSM__'];
 export class FSM extends EventEmitter {
-    _state = "";
-    abortCtrl;
+    name;
     static STATECHANGED = 'stateChanged';
     static EABORT = new Error('abort');
     static ESTATE = new Error('wrong state');
+    static INIT = "[*]";
+    get stateDiagram() {
+        return [];
+    }
+    _state = FSM.INIT;
+    abortCtrl;
+    constructor(name) {
+        super();
+        this.name = name;
+        this.name = this.name || this.constructor.name;
+        if (hasDevTools)
+            window.dispatchEvent(new CustomEvent("createAFSM", { detail: { name: this.name, diagram: this.stateDiagram } }));
+    }
     get state() {
         return this._state;
     }
     set state(value) {
         const old = this._state;
-        // console.debug(`${this.constructor.name} state change from ${this._state} to ${value}`);
         this._state = value;
-        this.emit(value, old);
-        this.emit(FSM.STATECHANGED, old, value);
+        const state = value.toString();
+        if (value)
+            this.emit(state, old);
+        this.emit(FSM.STATECHANGED, value, old);
+        if (hasDevTools) {
+            window.dispatchEvent(new CustomEvent("changeAFSM", { detail: { name: this.name, value, old } }));
+        }
     }
 }
-export class AFSM extends FSM {
-    static OFF = 'off';
-    static ON = 'on';
-    static INIT = '';
-    async start() {
-    }
-    async stop() {
-    }
-    async forceStop() {
-    }
-}
-__decorate([
-    From(AFSM.OFF, AFSM.INIT),
-    To(AFSM.ON)
-], AFSM.prototype, "start", null);
-__decorate([
-    From(AFSM.ON),
-    To(AFSM.OFF)
-], AFSM.prototype, "stop", null);
-__decorate([
-    To(AFSM.OFF)
-], AFSM.prototype, "forceStop", null);

@@ -54,3 +54,20 @@ afsm.start().then(() => {
 ```
 原子状态机有两种基本状态，即ON和OFF。可以用原子状态机组合成复杂的状态。
 在start和stop中间是异步变更中的状态，所以一共有4种状态。
+
+```mermaid
+stateDiagram-v2
+[*] --> connecting : connect
+connecting --> connected : connect success
+connecting --> [*] : connect failed
+disconnected --> reconnecting : reconnect
+reconnecting --> reconnected : reconnect success
+reconnecting --> disconnected : reconnect failed
+connected --> disconnected : disconnect
+connecting --> disconnected : disconnect
+[*] --> disconnected : disconnect
+reconnected --> disconnected : disconnect
+reconnecting --> disconnected : disconnect
+disconnected --> disconnected : disconnect
+disconnecting --> disconnected : disconnect
+```
