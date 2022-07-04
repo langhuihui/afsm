@@ -87,6 +87,7 @@ export function ChangeState(from: string | string[], to: string) {
 }
 //@ts-ignore
 const hasDevTools = typeof window !== 'undefined' && window['__AFSM__'];
+const inWorker = typeof importScripts !== 'undefined';
 export class FSM extends EventEmitter {
   static STATECHANGED = 'stateChanged';
   static EABORT = new Error('abort');
@@ -101,6 +102,7 @@ export class FSM extends EventEmitter {
     super();
     this.name = this.name || this.constructor.name;
     if (hasDevTools) window.dispatchEvent(new CustomEvent("createAFSM", { detail: { name: this.name, diagram: this.stateDiagram } }));
+    else if (inWorker) postMessage({ type: 'createAFSM', payload: { name: this.name, diagram: this.stateDiagram } });
   }
   get state() {
     return this._state;
@@ -111,8 +113,7 @@ export class FSM extends EventEmitter {
     const state = value.toString();
     if (value) this.emit(state, old);
     this.emit(FSM.STATECHANGED, value, old);
-    if (hasDevTools) {
-      window.dispatchEvent(new CustomEvent("changeAFSM", { detail: { name: this.name, value, old } }));
-    }
+    if (hasDevTools) window.dispatchEvent(new CustomEvent("changeAFSM", { detail: { name: this.name, value, old } }));
+    else if (inWorker) postMessage({ type: 'changeAFSM', payload: { name: this.name, value, old } });
   }
 }
