@@ -16,6 +16,8 @@ export declare class FSM extends EventEmitter {
     static EABORT: Error;
     static ESTATE: Error;
     static INIT: string;
+    static ON: string;
+    static OFF: string;
     get stateDiagram(): never[];
     _state: State;
     abortCtrl?: {

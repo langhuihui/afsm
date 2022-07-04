@@ -93,6 +93,8 @@ export class FSM extends EventEmitter {
   static EABORT = new Error('abort');
   static ESTATE = new Error('wrong state');
   static INIT = "[*]";
+  static ON = "on";
+  static OFF = "off";
   get stateDiagram() {
     return [];
   }
