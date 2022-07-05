@@ -18,39 +18,43 @@ export function ChangeState(from: string | string[], to: string) {
       stateDiagram.set(target, []);
       Object.defineProperty(target, 'stateDiagram', {
         get() {
-          let result: string[] = [];
+          let result = new Set<string>();
           let plain: { from: string; to: string; action: string; }[] = [];
           let forceTo: { to: string; action: string; }[] = [];
           const stateConfig = stateDiagram.get(target)!;
           const allState = new Set();
           stateConfig.forEach(({ from, to, action }) => {
-            allState.add(to);
             if (typeof from === 'string') {
-              allState.add(from);
               plain.push({ from, to, action });
-              allState.add(action + "ing");
             } else {
               if (from.length) {
                 from.forEach(f => {
-                  allState.add(f);
                   plain.push({ from: f, to, action });
                 });
-                allState.add(action + "ing");
               }
               else forceTo.push({ to, action });
             }
           });
           plain.forEach(({ from, to, action }) => {
-            result.push(`${from} --> ${action}ing : ${action}`, `${action}ing --> ${to} : ${action} 🟢`, `${action}ing --> ${from} : ${action} 🔴`);
+            allState.add(from);
+            allState.add(to);
+            allState.add(action + "ing");
+            result.add(`${from} --> ${action}ing : ${action}`);
+            result.add(`${action}ing --> ${to} : ${action} 🟢`);
+            result.add(`${action}ing --> ${from} : ${action} 🔴`);
           });
           forceTo.forEach(({ to, action }) => {
-            result.push(`${action}ing --> ${to} : ${action} 🟢`);
+            result.add(`${action}ing --> ${to} : ${action} 🟢`);
             allState.forEach(f => {
               if (f !== to)
-                result.push(`${f} --> ${action}ing : ${action}`);
+                result.add(`${f} --> ${action}ing : ${action}`);
             });
           });
-          return result;
+          const parent = Object.getPrototypeOf(target);
+          if (stateDiagram.has(parent)) {
+            return [...parent.stateDiagram, ...result];
+          }
+          return [...result];
         }
       });
     }
