@@ -2,6 +2,7 @@ import EventEmitter from 'eventemitter3';
 export interface IAFSM extends FSM {
 
 }
+const instance = Symbol('instance');
 export type State = string | MiddleState;
 // 中间过渡状态
 export class MiddleState {
@@ -99,6 +100,7 @@ export class FSM extends EventEmitter {
   static INIT = "[*]";
   static ON = "on";
   static OFF = "off";
+
   get stateDiagram() {
     return [];
   }
@@ -107,6 +109,9 @@ export class FSM extends EventEmitter {
   constructor(public name?: string) {
     super();
     this.name = this.name || this.constructor.name;
+    const names = Object.getPrototypeOf(this)[instance];
+    if (!names) Object.getPrototypeOf(this)[instance] = { name: this.name, count: 0 };
+    else this.name = names.name + "-" + names.count++;
     if (hasDevTools) window.dispatchEvent(new CustomEvent("createAFSM", { detail: { name: this.name, diagram: this.stateDiagram } }));
     else if (inWorker) postMessage({ type: 'createAFSM', payload: { name: this.name, diagram: this.stateDiagram } });
   }

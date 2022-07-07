@@ -1,4 +1,5 @@
 import EventEmitter from 'eventemitter3';
+const instance = Symbol('instance');
 // 中间过渡状态
 export class MiddleState {
     oldState;
@@ -121,6 +122,11 @@ export class FSM extends EventEmitter {
         super();
         this.name = name;
         this.name = this.name || this.constructor.name;
+        const names = Object.getPrototypeOf(this)[instance];
+        if (!names)
+            Object.getPrototypeOf(this)[instance] = { name: this.name, count: 0 };
+        else
+            this.name = names.name + "-" + names.count++;
         if (hasDevTools)
             window.dispatchEvent(new CustomEvent("createAFSM", { detail: { name: this.name, diagram: this.stateDiagram } }));
         else if (inWorker)
