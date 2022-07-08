@@ -8,11 +8,14 @@ export {}
 declare module '@vue/runtime-core' {
   export interface GlobalComponents {
     Mermaid: typeof import('./src/components/Mermaid.vue')['default']
+    NButton: typeof import('naive-ui')['NButton']
     NLayout: typeof import('naive-ui')['NLayout']
     NLayoutContent: typeof import('naive-ui')['NLayoutContent']
     NLayoutHeader: typeof import('naive-ui')['NLayoutHeader']
     NLayoutSider: typeof import('naive-ui')['NLayoutSider']
+    NPopover: typeof import('naive-ui')['NPopover']
     NSpace: typeof import('naive-ui')['NSpace']
+    NSpin: typeof import('naive-ui')['NSpin']
     NTab: typeof import('naive-ui')['NTab']
     NTabs: typeof import('naive-ui')['NTabs']
     NTag: typeof import('naive-ui')['NTag']
