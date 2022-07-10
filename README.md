@@ -8,7 +8,7 @@
 # 安装 
   
   ```bash
-  npm install -g afsm
+  npm install afsm
   ```
 # 使用
 
