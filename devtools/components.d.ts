@@ -16,11 +16,11 @@ declare module '@vue/runtime-core' {
     NPopover: typeof import('naive-ui')['NPopover']
     NSpace: typeof import('naive-ui')['NSpace']
     NSpin: typeof import('naive-ui')['NSpin']
-    NTab: typeof import('naive-ui')['NTab']
-    NTabs: typeof import('naive-ui')['NTabs']
     NTag: typeof import('naive-ui')['NTag']
     NTimeline: typeof import('naive-ui')['NTimeline']
     NTimelineItem: typeof import('naive-ui')['NTimelineItem']
+    NTree: typeof import('naive-ui')['NTree']
+    Suffix: typeof import('./src/components/Suffix.vue')['default']
   }
 
 }

@@ -131,6 +131,7 @@ function setState(value, err) {
 }
 export class FSM extends EventEmitter {
     name;
+    groupName;
     get stateDiagram() {
         return [];
     }
@@ -142,10 +143,12 @@ export class FSM extends EventEmitter {
     _state = FSM.INIT;
     _cacheResult;
     abortCtrl;
-    constructor(name) {
+    constructor(name, groupName) {
         super();
         this.name = name;
-        this.name = this.name || this.constructor.name;
+        this.groupName = groupName;
+        if (!groupName)
+            groupName = this.constructor.name;
         const prototype = Object.getPrototypeOf(this);
         const names = prototype[instance];
         if (!names)
@@ -154,8 +157,8 @@ export class FSM extends EventEmitter {
             this.name = names.name + "-" + names.count++;
         this.updateDevTools({ diagram: this.stateDiagram });
     }
-    updateDevTools(payload) {
-        sendDevTools(FSM.UPDATEAFSM, { name: this.name, ...payload });
+    updateDevTools(payload = {}) {
+        sendDevTools(FSM.UPDATEAFSM, { name: this.name, group: this.groupName, ...payload });
     }
     get state() {
         return this._state;

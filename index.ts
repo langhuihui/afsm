@@ -128,17 +128,17 @@ export class FSM extends EventEmitter {
   _state: State = FSM.INIT;
   _cacheResult: any;
   abortCtrl?: { aborted: boolean; };
-  constructor(public name?: string) {
+  constructor(public name?: string, public groupName?: string) {
     super();
-    this.name = this.name || this.constructor.name;
+    if (!groupName) groupName = this.constructor.name;
     const prototype = Object.getPrototypeOf(this);
     const names = prototype[instance];
     if (!names) prototype[instance] = { name: this.name, count: 0 };
     else this.name = names.name + "-" + names.count++;
     this.updateDevTools({ diagram: this.stateDiagram });
   }
-  updateDevTools(payload: any) {
-    sendDevTools(FSM.UPDATEAFSM, { name: this.name, ...payload });
+  updateDevTools(payload: any = {}) {
+    sendDevTools(FSM.UPDATEAFSM, { name: this.name, group: this.groupName, ...payload });
   }
   get state() {
     return this._state;

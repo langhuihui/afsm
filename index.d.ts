@@ -13,6 +13,7 @@ export declare class MiddleState {
 export declare function ChangeState(from: string | string[], to: string): (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => void;
 export declare class FSM extends EventEmitter {
     name?: string | undefined;
+    groupName?: string | undefined;
     get stateDiagram(): string[];
     static STATECHANGED: string;
     static UPDATEAFSM: string;
@@ -24,7 +25,7 @@ export declare class FSM extends EventEmitter {
     abortCtrl?: {
         aborted: boolean;
     };
-    constructor(name?: string | undefined);
-    updateDevTools(payload: any): void;
+    constructor(name?: string | undefined, groupName?: string | undefined);
+    updateDevTools(payload?: any): void;
     get state(): State;
 }

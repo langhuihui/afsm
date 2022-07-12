@@ -7,4 +7,5 @@ declare module '*.vue' {
   export default component;
 }
 declare type FSMStateInfo = { time: number, state: string, err?: string, action: string, processing: boolean, note: string; };
+declare type FSMInfoGroup = { name: string, children: FSMInfo[]; };
 declare type FSMInfo = { name: string, diagram: string[], state: FSMStateInfo, history: FSMStateInfo[]; };
