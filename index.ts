@@ -113,7 +113,7 @@ function setState(this: FSM, value: State, err?: any) {
   this._state = value;
   const state = value.toString();
   if (value) this.emit(state, old);
-  this.emit(FSM.STATECHANGED, value, old);
+  this.emit(FSM.STATECHANGED, value, old, err);
   this.updateDevTools({ value, old, err });
 }
 export class FSM extends EventEmitter {
@@ -131,6 +131,7 @@ export class FSM extends EventEmitter {
   constructor(public name?: string, public groupName?: string) {
     super();
     if (!groupName) groupName = this.constructor.name;
+    if (!name) name = Date.now().toString(36);
     const prototype = Object.getPrototypeOf(this);
     const names = prototype[instance];
     if (!names) prototype[instance] = { name: this.name, count: 0 };

@@ -5,8 +5,10 @@ import { format } from 'date-fns';
 //@ts-ignore
 import mermaid from 'mermaid';
 import SuffixVue from './components/Suffix.vue';
-const group: { [key: string]: { children: { [key: string]: FSMInfo; }, group: FSMInfoGroup; }; } = {};
-const fsmGroup = reactive([] as FSMInfoGroup[]);
+import { TreeOption } from 'naive-ui';
+const fsms: { [key: string]: FSMInfo; } = {};
+const group: { [key: string]: TreeOption; } = reactive({});
+const fsmGroup = reactive([] as TreeOption[]);
 type MiddleState = { oldState: string; newState: string; action: string; };
 interface FrontMessage {
   name: string;
@@ -21,6 +23,9 @@ interface CreateMessage extends FrontMessage {
 interface ChangeMessage extends FrontMessage {
   value: string | MiddleState, old: string | MiddleState, err?: string;
 }
+function getInfoUniqueName(info: { name: string, group: string; }) {
+  return `${info.group}®️${info.name}`;
+}
 const reconnect = () => {
   try {
     const port = chrome.runtime.connect({
@@ -34,32 +39,40 @@ const reconnect = () => {
       } else if ('diagram' in data) {
         const initState = { time: Date.now(), state: "[*]", action: "", processing: false, note: "" };
         if (!group[data.group]) {
-          group[data.group] = { children: {}, group: { name: data.group, children: [] } };
-          fsmGroup.push(group[data.group].group);
-        }
-        group[data.group].children[data.name] = {
+          group[data.group] = { key: data.group, label: data.group, children: [] };
+          fsmGroup.push(group[data.group]);
+        };
+        const newInfo = reactive({
           ...data,
           state: initState,
           history: [initState],
-        };
-        group[data.group].group.children.push(group[data.group].children[data.name]);
-        if (!currentFSM.value) currentFSM.value = group[data.group].children[data.name];
+        });
+        const infoKey = getInfoUniqueName(newInfo);
+        group[data.group].children?.push({ key: infoKey, label: data.name, isLeaf: true });
+        fsms[infoKey] = newInfo;
+        if (!currentFSM.value) currentFSM.value = newInfo;
       } else if ('note' in data) {
-        if (group[data.group] && group[data.group].children[data.name]) group[data.group].children[data.name].state.note = data.note;
+        const infoKey = getInfoUniqueName(data);
+        if (fsms[infoKey]) fsms[infoKey].state.note = data.note;
       } else if ('value' in data) {
-        if (group[data.group] && group[data.group].children[data.name]) {
-          const info = group[data.group].children[data.name];
+        const infoKey = getInfoUniqueName(data);
+        if (fsms[infoKey]) {
+          const info = fsms[infoKey];
           let success = typeof data.old == 'string' || data.old.oldState != data.value;
           const action = typeof data.old != 'string' ? data.old.action + (success ? '🟢' : '🔴') : typeof data.value != 'string' ? data.value.action : "";
           info.state = { note: "", time: Date.now(), processing: typeof data.value != 'string', state: typeof data.value == 'string' ? data.value : data.value.action + 'ing', err: data.err, action };
           info.history.push(info.state);
         }
       } else {
-        if (group[data.group] && group[data.group].children[data.name]) {
-          group[data.group].group.children.splice(group[data.group].group.children.indexOf(group[data.group].children[data.name]), 1);
-          delete group[data.group].children[data.name];
-          if(group[data.group].group.children.length == 0) {
-            fsmGroup.splice(fsmGroup.indexOf(group[data.group].group), 1);
+        const infoKey = getInfoUniqueName(data);
+        if (fsms[infoKey]) {
+          const children = group[data.group].children!;
+          const index = children.findIndex(x => x.key == infoKey);
+          if (index >= 0) {
+            children.splice(index, 1);
+          }
+          if (children.length == 0) {
+            fsmGroup.splice(fsmGroup.findIndex(x => x.key == data.group), 1);
             delete group[data.group];
           }
         }
@@ -74,11 +87,12 @@ const reconnect = () => {
   }
 };
 function clearAll() {
-  for (const key in fsmGroup) {
-    delete fsmGroup[key];
-  }
+  fsmGroup.length = 0;
   for (const key in group) {
     delete group[key];
+  }
+  for (const key in fsms) {
+    delete fsms[key];
   }
   currentFSM.value = null;
 }
@@ -98,11 +112,14 @@ const Mermaid = function () {
     ref: divRef,
   }) : "";
 };
-function renderSuffix({ option }: { option: FSMInfo; }) {
-  return h(
+function renderSuffix({ option }: { option: TreeOption; }) {
+  return fsms[option.key!] ? h(
     SuffixVue,
-    { state: option.state },
-  );
+    { state: fsms[option.key!].state },
+  ) : h("");
+}
+function onSelected(keys: string[]) {
+  currentFSM.value = fsms[keys[0]];
 }
 </script>
 
@@ -129,7 +146,7 @@ function renderSuffix({ option }: { option: FSMInfo; }) {
     </n-layout-header>
     <n-layout has-sider position="absolute" style="top: 64px; bottom: 64px">
       <n-layout-sider content-style="padding: 24px;">
-        <n-tree block-line :data="fsmGroup" key-field="name" label-field="name" :render-suffix="renderSuffix" />
+        <n-tree block-line :data="fsmGroup" :render-suffix="renderSuffix" @update:selected-keys="onSelected" />
       </n-layout-sider>
       <n-layout-content content-style="padding: 24px;">
         <n-space>
