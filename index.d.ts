@@ -15,6 +15,7 @@ export declare class FSM extends EventEmitter {
     name?: string | undefined;
     get stateDiagram(): string[];
     static STATECHANGED: string;
+    static UPDATEAFSM: string;
     static INIT: string;
     static ON: string;
     static OFF: string;
@@ -24,5 +25,6 @@ export declare class FSM extends EventEmitter {
         aborted: boolean;
     };
     constructor(name?: string | undefined);
+    updateDevTools(payload: any): void;
     get state(): State;
 }

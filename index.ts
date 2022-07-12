@@ -98,25 +98,30 @@ export function ChangeState(from: string | string[], to: string) {
     };
   };
 }
-
-//@ts-ignore
-const hasDevTools = typeof window !== 'undefined' && window['__AFSM__'];
-const inWorker = typeof importScripts !== 'undefined';
+const sendDevTools = (() => {
+  //@ts-ignore
+  const hasDevTools = typeof window !== 'undefined' && window['__AFSM__'];
+  const inWorker = typeof importScripts !== 'undefined';
+  return hasDevTools ? (name: string, detail: any) => {
+    window.dispatchEvent(new CustomEvent(name, { detail }));
+  } : inWorker ? (type: string, payload: any) => {
+    postMessage({ type, payload });
+  } : () => { };
+})();
 function setState(this: FSM, value: State, err?: any) {
   const old = this._state;
   this._state = value;
   const state = value.toString();
   if (value) this.emit(state, old);
   this.emit(FSM.STATECHANGED, value, old);
-  const detail = { name: this.name, value, old, err };
-  if (hasDevTools) window.dispatchEvent(new CustomEvent("changeAFSM", { detail }));
-  else if (inWorker) postMessage({ type: 'changeAFSM', payload: detail });
+  this.updateDevTools({ value, old, err });
 }
 export class FSM extends EventEmitter {
   get stateDiagram(): string[] {
     return [];
   }
   static STATECHANGED = 'stateChanged';
+  static UPDATEAFSM = 'updateAFSM';
   static INIT = "[*]";//初始状态
   static ON = "on";
   static OFF = "off";
@@ -130,8 +135,10 @@ export class FSM extends EventEmitter {
     const names = prototype[instance];
     if (!names) prototype[instance] = { name: this.name, count: 0 };
     else this.name = names.name + "-" + names.count++;
-    if (hasDevTools) window.dispatchEvent(new CustomEvent("createAFSM", { detail: { name: this.name, diagram: this.stateDiagram } }));
-    else if (inWorker) postMessage({ type: 'createAFSM', payload: { name: this.name, diagram: this.stateDiagram } });
+    this.updateDevTools({ diagram: this.stateDiagram });
+  }
+  updateDevTools(payload: any) {
+    sendDevTools(FSM.UPDATEAFSM, { name: this.name, ...payload });
   }
   get state() {
     return this._state;

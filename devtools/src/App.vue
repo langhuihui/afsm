@@ -12,12 +12,12 @@ const reconnect = () => {
       name: "" + chrome.devtools.inspectedWindow.tabId,
     });
     console.log("Connected to background", port);
-    port.onMessage.addListener((data: { name: string, diagram: string[]; } | '🎟️' | { name: string, value: string | MiddleState, old: string | MiddleState, err?: string; }) => {
+    port.onMessage.addListener((data: { name: string, note: string; } | { name: string, diagram: string[]; } | '🎟️' | { name: string, value: string | MiddleState, old: string | MiddleState, err?: string; }) => {
       if (data == '🎟️') {
         console.log("content connected", port);
         clearAll();
       } else if ('diagram' in data) {
-        const initState = { time: Date.now(), state: "[*]", action: "", processing: false };
+        const initState = { time: Date.now(), state: "[*]", action: "", processing: false, note: "" };
         fsms[data.name] = {
           name: data.name,
           diagram: data.diagram,
@@ -25,10 +25,12 @@ const reconnect = () => {
           history: [initState],
         };
         if (!showName.value) showName.value = data.name;
+      } else if ('note' in data) {
+        fsms[data.name].state.note = data.note;
       } else {
         let success = typeof data.old == 'string' || data.old.oldState != data.value;
         const action = typeof data.old != 'string' ? data.old.action + (success ? '🟢' : '🔴') : typeof data.value != 'string' ? data.value.action : "";
-        fsms[data.name].state = { time: Date.now(), processing: typeof data.value != 'string', state: typeof data.value == 'string' ? data.value : data.value.action + 'ing', err: data.err, action };
+        fsms[data.name].state = { note: "", time: Date.now(), processing: typeof data.value != 'string', state: typeof data.value == 'string' ? data.value : data.value.action + 'ing', err: data.err, action };
         fsms[data.name].history.push(fsms[data.name].state);
       }
     });
@@ -89,7 +91,7 @@ const Mermaid = function () {
     <n-layout has-sider position="absolute" style="top: 64px; bottom: 64px">
       <n-layout-sider content-style="padding: 24px;">
         <n-timeline v-if="currentFSM">
-          <n-timeline-item :content="state.action" :title="state.state" v-for="state in currentFSM.history"
+          <n-timeline-item :content="state.note" :title="state.state" v-for="state in currentFSM.history"
             :time="format(state.time, 'hh:mm:ss.SSS')"
             :type="state.action ? state.processing ? 'info' : (state.err ? 'error' : 'success') : 'default'" />
         </n-timeline>

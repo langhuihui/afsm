@@ -110,9 +110,16 @@ export function ChangeState(from, to) {
         };
     };
 }
-//@ts-ignore
-const hasDevTools = typeof window !== 'undefined' && window['__AFSM__'];
-const inWorker = typeof importScripts !== 'undefined';
+const sendDevTools = (() => {
+    //@ts-ignore
+    const hasDevTools = typeof window !== 'undefined' && window['__AFSM__'];
+    const inWorker = typeof importScripts !== 'undefined';
+    return hasDevTools ? (name, detail) => {
+        window.dispatchEvent(new CustomEvent(name, { detail }));
+    } : inWorker ? (type, payload) => {
+        postMessage({ type, payload });
+    } : () => { };
+})();
 function setState(value, err) {
     const old = this._state;
     this._state = value;
@@ -120,11 +127,7 @@ function setState(value, err) {
     if (value)
         this.emit(state, old);
     this.emit(FSM.STATECHANGED, value, old);
-    const detail = { name: this.name, value, old, err };
-    if (hasDevTools)
-        window.dispatchEvent(new CustomEvent("changeAFSM", { detail }));
-    else if (inWorker)
-        postMessage({ type: 'changeAFSM', payload: detail });
+    this.updateDevTools({ value, old, err });
 }
 export class FSM extends EventEmitter {
     name;
@@ -132,6 +135,7 @@ export class FSM extends EventEmitter {
         return [];
     }
     static STATECHANGED = 'stateChanged';
+    static UPDATEAFSM = 'updateAFSM';
     static INIT = "[*]"; //初始状态
     static ON = "on";
     static OFF = "off";
@@ -148,10 +152,10 @@ export class FSM extends EventEmitter {
             prototype[instance] = { name: this.name, count: 0 };
         else
             this.name = names.name + "-" + names.count++;
-        if (hasDevTools)
-            window.dispatchEvent(new CustomEvent("createAFSM", { detail: { name: this.name, diagram: this.stateDiagram } }));
-        else if (inWorker)
-            postMessage({ type: 'createAFSM', payload: { name: this.name, diagram: this.stateDiagram } });
+        this.updateDevTools({ diagram: this.stateDiagram });
+    }
+    updateDevTools(payload) {
+        sendDevTools(FSM.UPDATEAFSM, { name: this.name, ...payload });
     }
     get state() {
         return this._state;

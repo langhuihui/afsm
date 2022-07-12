@@ -16,9 +16,6 @@ inject(`window.__AFSM__ = true`);
 const port = chrome.runtime.connect({
   name: 'content-script'
 });
-window.addEventListener('createAFSM', msg => {
-  port.postMessage(msg.detail);
-});
-window.addEventListener('changeAFSM', msg => {
+window.addEventListener('updateAFSM', msg => {
   port.postMessage(msg.detail);
 });
