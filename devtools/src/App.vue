@@ -6,13 +6,25 @@ import { format } from 'date-fns';
 import mermaid from 'mermaid';
 const fsms = reactive({} as { [key: string]: FSMInfo; });
 type MiddleState = { oldState: string; newState: string; action: string; };
+interface FrontMessage {
+  name: string;
+}
+interface NoteMessage extends FrontMessage {
+  note: string;
+}
+interface CreateMessage extends FrontMessage {
+  diagram: string[];
+}
+interface ChangeMessage extends FrontMessage {
+  value: string | MiddleState, old: string | MiddleState, err?: string;
+}
 const reconnect = () => {
   try {
     const port = chrome.runtime.connect({
       name: "" + chrome.devtools.inspectedWindow.tabId,
     });
     console.log("Connected to background", port);
-    port.onMessage.addListener((data: { name: string, note: string; } | { name: string, diagram: string[]; } | '🎟️' | { name: string, value: string | MiddleState, old: string | MiddleState, err?: string; }) => {
+    port.onMessage.addListener((data: '🎟️' | FrontMessage | NoteMessage | CreateMessage | ChangeMessage) => {
       if (data == '🎟️') {
         console.log("content connected", port);
         clearAll();
@@ -26,12 +38,16 @@ const reconnect = () => {
         };
         if (!showName.value) showName.value = data.name;
       } else if ('note' in data) {
-        fsms[data.name].state.note = data.note;
+        if (fsms[data.name]) fsms[data.name].state.note = data.note;
+      } else if ('value' in data) {
+        if (fsms[data.name]) {
+          let success = typeof data.old == 'string' || data.old.oldState != data.value;
+          const action = typeof data.old != 'string' ? data.old.action + (success ? '🟢' : '🔴') : typeof data.value != 'string' ? data.value.action : "";
+          fsms[data.name].state = { note: "", time: Date.now(), processing: typeof data.value != 'string', state: typeof data.value == 'string' ? data.value : data.value.action + 'ing', err: data.err, action };
+          fsms[data.name].history.push(fsms[data.name].state);
+        }
       } else {
-        let success = typeof data.old == 'string' || data.old.oldState != data.value;
-        const action = typeof data.old != 'string' ? data.old.action + (success ? '🟢' : '🔴') : typeof data.value != 'string' ? data.value.action : "";
-        fsms[data.name].state = { note: "", time: Date.now(), processing: typeof data.value != 'string', state: typeof data.value == 'string' ? data.value : data.value.action + 'ing', err: data.err, action };
-        fsms[data.name].history.push(fsms[data.name].state);
+        delete fsms[data.name];
       }
     });
     port.onDisconnect.addListener(() => {
