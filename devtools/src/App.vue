@@ -146,7 +146,7 @@ function onSelected(keys: string[]) {
     </n-layout-header>
     <n-layout has-sider position="absolute" style="top: 64px; bottom: 64px">
       <n-layout-sider content-style="padding: 24px;">
-        <n-tree block-line :data="fsmGroup" :render-suffix="renderSuffix" @update:selected-keys="onSelected" />
+        <n-tree block-line :data="fsmGroup" :render-suffix="renderSuffix" @update:selected-keys="onSelected" default-expand-all/>
       </n-layout-sider>
       <n-layout-content content-style="padding: 24px;">
         <n-space>
