@@ -1,6 +1,6 @@
 {
   "name": "afsm",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "description": "atomic fsm",
   "main": "index.js",
   "type": "module",

@@ -130,9 +130,9 @@ export class FSM extends EventEmitter {
   abortCtrl?: { aborted: boolean; };
   constructor(public name?: string, public groupName?: string) {
     super();
-    if (!groupName) this.groupName = this.constructor.name;
     if (!name) name = Date.now().toString(36);
     const prototype = Object.getPrototypeOf(this);
+    if (!groupName) this.groupName = this.constructor.name;
     const names = prototype[instance];
     if (!names) prototype[instance] = { name: this.name, count: 0 };
     else this.name = names.name + "-" + names.count++;

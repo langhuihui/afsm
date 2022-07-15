@@ -147,11 +147,11 @@ export class FSM extends EventEmitter {
         super();
         this.name = name;
         this.groupName = groupName;
-        if (!groupName)
-            this.groupName = this.constructor.name;
         if (!name)
             name = Date.now().toString(36);
         const prototype = Object.getPrototypeOf(this);
+        if (!groupName)
+            this.groupName = this.constructor.name;
         const names = prototype[instance];
         if (!names)
             prototype[instance] = { name: this.name, count: 0 };

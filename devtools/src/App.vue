@@ -26,6 +26,8 @@ interface ChangeMessage extends FrontMessage {
 function getInfoUniqueName(info: { name: string, group: string; }) {
   return `${info.group}®️${info.name}`;
 }
+const connected = ref(false);
+const allHistory: { key: string, state: FSMStateInfo; }[] = [];//总体历史
 const reconnect = () => {
   try {
     const port = chrome.runtime.connect({
@@ -35,9 +37,10 @@ const reconnect = () => {
     port.onMessage.addListener((data: '🎟️' | FrontMessage | NoteMessage | CreateMessage | ChangeMessage) => {
       if (data == '🎟️') {
         console.log("content connected", port);
+        connected.value = true;
         clearAll();
       } else if ('diagram' in data) {
-        const initState = { time: Date.now(), state: "[*]", action: "", processing: false, note: "" };
+        const initState = { time: Date.now(), state: data.name + " created", action: "", processing: false, note: "" };
         if (!group[data.group]) {
           group[data.group] = { key: data.group, label: data.group, children: [] };
           fsmGroup.push(group[data.group]);
@@ -48,6 +51,7 @@ const reconnect = () => {
           history: [initState],
         });
         const infoKey = getInfoUniqueName(newInfo);
+        allHistory.push({ key: infoKey, state: initState });
         group[data.group].children?.push({ key: infoKey, label: data.name, isLeaf: true });
         fsms[infoKey] = newInfo;
         if (!currentFSM.value) currentFSM.value = newInfo;
@@ -61,7 +65,8 @@ const reconnect = () => {
           let success = typeof data.old == 'string' || data.old.oldState != data.value;
           const action = typeof data.old != 'string' ? data.old.action + (success ? '🟢' : '🔴') : typeof data.value != 'string' ? data.value.action : "";
           info.state = { note: "", time: Date.now(), processing: typeof data.value != 'string', state: typeof data.value == 'string' ? data.value : data.value.action + 'ing', err: data.err, action };
-          info.history.push(info.state);
+          // info.history.push(info.state);
+          allHistory.push({ key: infoKey, state: info.state });
         }
       } else {
         const infoKey = getInfoUniqueName(data);
@@ -80,6 +85,7 @@ const reconnect = () => {
     });
     port.onDisconnect.addListener(() => {
       console.log("disconnect");
+      connected.value = false;
       setTimeout(reconnect, 1000);
     });
   } catch (err) {
@@ -94,11 +100,35 @@ function clearAll() {
   for (const key in fsms) {
     delete fsms[key];
   }
+  allHistory.length = 0;
+  checked.value.length = 0;
   currentFSM.value = null;
 }
 reconnect();
 const currentFSM = ref(null as FSMInfo | null);
 const divRef = ref();
+const checked = ref([] as string[]);
+const timeline = computed(() => {
+  const keys = checked.value.filter(key => fsms[key]);
+  const result = keys.map(key => [] as Array<FSMStateInfo | number>);
+  let i = 0;
+  let next = i;
+  for (let h of allHistory) {
+    for (let j = 0; j < result.length; j++) {
+      if (h.key == keys[j]) {
+        result[j][i] = h.state;
+        next = i + 1;
+      } else {
+        result[j][i] = h.state.time;
+      }
+    }
+    i = next;
+  }
+  return result;
+});
+function updateCheckedKeys(keys: string[]) {
+  checked.value = keys;
+}
 watchEffect(() => {
   if (divRef.value && currentFSM.value)
     mermaid.mermaidAPI.render('mermaid', ['stateDiagram-v2', ...currentFSM.value.diagram, `note left of ${currentFSM.value.state.state} : 🚩`].join('\n'), function (svgCode: string) {
@@ -106,11 +136,11 @@ watchEffect(() => {
     });
 });
 const Mermaid = function () {
-  return currentFSM.value ? h('div', {
+  return h('div', {
     class: 'mermaid',
-    id: currentFSM.value.name,
+    id: currentFSM.value!.name,
     ref: divRef,
-  }) : "";
+  });
 };
 function renderSuffix({ option }: { option: TreeOption; }) {
   return fsms[option.key!] ? h(
@@ -126,36 +156,32 @@ function onSelected(keys: string[]) {
 <template>
   <n-layout style="height: 100vh">
     <n-layout-header>
-      <!-- <n-tabs type="card" v-model:value="showName">
-        <n-tab :name="item.name" v-for="item in fsms">
-          <n-space vertical>
-            {{ item.name }}
-            <n-popover trigger="hover" v-if="item.state.err">
-              <template #trigger>
-                <n-button> {{ item.state.state }}</n-button>
-              </template>
-              <span>item.state.err</span>
-            </n-popover>
-            <n-spin size="small" v-else-if="item.state.processing" />
-            <n-tag size="small" type="success" :bordered="false" v-else>
-              {{ item.state.state }}
-            </n-tag>
-          </n-space>
-        </n-tab>
-      </n-tabs> -->
+      <n-space class="title-bar">
+        <n-avatar size="small" src="./logo.png">
+        </n-avatar>
+        <span class="title">智能状态机可视化界面</span>
+        <n-tag round :bordered="false" :type="connected ? 'success' : 'error'">
+          {{ connected ? "已连接" : "未连接" }}
+        </n-tag>
+        <n-button size="small" @click="clearAll">清空</n-button>
+      </n-space>
     </n-layout-header>
-    <n-layout has-sider position="absolute" style="top: 64px; bottom: 64px">
+    <n-layout has-sider>
       <n-layout-sider content-style="padding: 24px;">
-        <n-tree block-line :data="fsmGroup" :render-suffix="renderSuffix" @update:selected-keys="onSelected" default-expand-all/>
+        <n-tree cascade checkable block-line :data="fsmGroup" :render-suffix="renderSuffix"
+          @update:selected-keys="onSelected" @update:checked-keys="updateCheckedKeys" default-expand-all />
       </n-layout-sider>
       <n-layout-content content-style="padding: 24px;">
         <n-space>
-          <n-timeline v-if="currentFSM">
-            <n-timeline-item :content="state.note" :title="state.state" v-for="state in currentFSM.history"
-              :time="format(state.time, 'hh:mm:ss.SSS')"
-              :type="state.action ? state.processing ? 'info' : (state.err ? 'error' : 'success') : 'default'" />
+          <n-timeline v-for="item in timeline" title="-">
+            <template v-for="state in item">
+              <n-timeline-item v-if="typeof state == 'number'" :time="format(state, 'hh:mm:ss.SSS')" />
+              <n-timeline-item v-else :content="state.note" :title="state.state"
+                :time="format(state.time, 'hh:mm:ss.SSS')"
+                :type="state.action ? state.processing ? 'info' : (state.err ? 'error' : 'success') : 'default'" />
+            </template>
           </n-timeline>
-          <Mermaid />
+          <Mermaid v-if='currentFSM && !checked.length' />
         </n-space>
       </n-layout-content>
     </n-layout>
@@ -165,6 +191,15 @@ function onSelected(keys: string[]) {
 <style>
 .n-card {
   max-width: 300px;
+}
+
+.title-bar {
+  padding: 10px;
+  background-color: rgb(204, 204, 204);
+}
+
+.title {
+  font-size: 20px;
 }
 
 .current>rect {
