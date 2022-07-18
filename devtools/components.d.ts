@@ -10,6 +10,7 @@ declare module '@vue/runtime-core' {
     Mermaid: typeof import('./src/components/Mermaid.vue')['default']
     NAvatar: typeof import('naive-ui')['NAvatar']
     NButton: typeof import('naive-ui')['NButton']
+    NDataTable: typeof import('naive-ui')['NDataTable']
     NLayout: typeof import('naive-ui')['NLayout']
     NLayoutContent: typeof import('naive-ui')['NLayoutContent']
     NLayoutHeader: typeof import('naive-ui')['NLayoutHeader']

@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 //@ts-ignore
 import mermaid from 'mermaid';
 import SuffixVue from './components/Suffix.vue';
-import { TreeOption } from 'naive-ui';
+import { DataTableColumn, TreeOption } from 'naive-ui';
 const fsms: { [key: string]: FSMInfo; } = {};
 const group: { [key: string]: TreeOption; } = reactive({});
 const fsmGroup = reactive([] as TreeOption[]);
@@ -40,20 +40,20 @@ const reconnect = () => {
         connected.value = true;
         clearAll();
       } else if ('diagram' in data) {
-        const initState = { time: Date.now(), state: data.name + " created", action: "", processing: false, note: "" };
+        const initState = { time: Date.now(), state: "[*]", action: "", processing: false, note: "" };
         if (!group[data.group]) {
           group[data.group] = { key: data.group, label: data.group, children: [] };
           fsmGroup.push(group[data.group]);
         };
         const newInfo = reactive({
           ...data,
+          key: getInfoUniqueName(data),
           state: initState,
           history: [initState],
         });
-        const infoKey = getInfoUniqueName(newInfo);
-        allHistory.push({ key: infoKey, state: initState });
-        group[data.group].children?.push({ key: infoKey, label: data.name, isLeaf: true });
-        fsms[infoKey] = newInfo;
+        allHistory.push({ key: newInfo.key, state: initState });
+        group[data.group].children?.push({ key: newInfo.key, label: data.name, isLeaf: true });
+        fsms[newInfo.key] = newInfo;
         if (!currentFSM.value) currentFSM.value = newInfo;
       } else if ('note' in data) {
         const infoKey = getInfoUniqueName(data);
@@ -65,7 +65,7 @@ const reconnect = () => {
           let success = typeof data.old == 'string' || data.old.oldState != data.value;
           const action = typeof data.old != 'string' ? data.old.action + (success ? '🟢' : '🔴') : typeof data.value != 'string' ? data.value.action : "";
           info.state = { note: "", time: Date.now(), processing: typeof data.value != 'string', state: typeof data.value == 'string' ? data.value : data.value.action + 'ing', err: data.err, action };
-          // info.history.push(info.state);
+          info.history.push(info.state);
           allHistory.push({ key: infoKey, state: info.state });
         }
       } else {
@@ -107,19 +107,38 @@ function clearAll() {
 reconnect();
 const currentFSM = ref(null as FSMInfo | null);
 const divRef = ref();
-const checked = ref([] as string[]);
-const timeline = computed(() => {
-  const keys = checked.value.filter(key => fsms[key]);
-  const result = keys.map(key => [] as Array<FSMStateInfo | number>);
+const checked = ref([] as FSMInfo[]);
+// const timeline = computed(() => {
+//   const keys = checked.value.filter(key => fsms[key]);
+//   const result = keys.map(key => [] as Array<FSMStateInfo | number>);
+//   let i = 0;
+//   let next = i;
+//   for (let h of allHistory) {
+//     for (let j = 0; j < result.length; j++) {
+//       if (h.key == keys[j]) {
+//         result[j][i] = h.state;
+//         next = i + 1;
+//       } else {
+//         result[j][i] = h.state.time;
+//       }
+//     }
+//     i = next;
+//   }
+//   return result;
+// });
+const columns = ref([] as DataTableColumn[]);
+const data = computed(() => {
   let i = 0;
   let next = i;
-  for (let h of allHistory) {
-    for (let j = 0; j < result.length; j++) {
-      if (h.key == keys[j]) {
-        result[j][i] = h.state;
+  const result: any[] = [];
+  const infos = checked.value;
+  for (let history of allHistory) {
+    const maybe = { time: format(history.state.time, 'hh:mm:ss.SSS') } as any;
+    for (let j = 0; j < infos.length; j++) {
+      if (history.key == infos[j].key) {
+        maybe[infos[j].key] = history.state.state;
         next = i + 1;
-      } else {
-        result[j][i] = h.state.time;
+        result[i] = maybe;
       }
     }
     i = next;
@@ -127,7 +146,14 @@ const timeline = computed(() => {
   return result;
 });
 function updateCheckedKeys(keys: string[]) {
-  checked.value = keys;
+  checkedKeys.value = keys;
+  checked.value = keys.filter(key => fsms[key]).map(key => fsms[key]);
+  columns.value = checked.value.map(info => {
+    return {
+      title: () => h('div', [info.group, h('br'), info.name]), key: info.key
+    };
+  });
+  columns.value.unshift({ title: "Time", key: "time", width: 130 });
 }
 watchEffect(() => {
   if (divRef.value && currentFSM.value)
@@ -150,7 +176,9 @@ function renderSuffix({ option }: { option: TreeOption; }) {
 }
 function onSelected(keys: string[]) {
   currentFSM.value = fsms[keys[0]];
+  updateCheckedKeys(keys);
 }
+const checkedKeys = ref([] as string[]);
 </script>
 
 <template>
@@ -168,20 +196,18 @@ function onSelected(keys: string[]) {
     </n-layout-header>
     <n-layout has-sider>
       <n-layout-sider content-style="padding: 24px;">
-        <n-tree cascade checkable block-line :data="fsmGroup" :render-suffix="renderSuffix"
+        <n-tree cascade checkable block-line :data="fsmGroup" :render-suffix="renderSuffix" :checked-keys="checkedKeys"
           @update:selected-keys="onSelected" @update:checked-keys="updateCheckedKeys" default-expand-all />
       </n-layout-sider>
       <n-layout-content content-style="padding: 24px;">
-        <n-space>
-          <n-timeline v-for="item in timeline" title="-">
-            <template v-for="state in item">
-              <n-timeline-item v-if="typeof state == 'number'" :time="format(state, 'hh:mm:ss.SSS')" />
-              <n-timeline-item v-else :content="state.note" :title="state.state"
-                :time="format(state.time, 'hh:mm:ss.SSS')"
-                :type="state.action ? state.processing ? 'info' : (state.err ? 'error' : 'success') : 'default'" />
-            </template>
+        <n-data-table single-column :single-line="false" :data="data" :columns="columns" v-if="checked.length > 1"> </n-data-table>
+        <n-space v-else>
+          <n-timeline v-if="currentFSM">
+            <n-timeline-item v-for="state in currentFSM.history" :content="state.note" :title="state.state"
+              :time="format(state.time, 'hh:mm:ss.SSS')"
+              :type="state.action ? state.processing ? 'info' : (state.err ? 'error' : 'success') : 'default'" />
           </n-timeline>
-          <Mermaid v-if='currentFSM && !checked.length' />
+          <Mermaid v-if='currentFSM' />
         </n-space>
       </n-layout-content>
     </n-layout>
