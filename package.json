@@ -1,12 +1,14 @@
 {
   "name": "afsm",
-  "version": "2.1.5",
-  "description": "atomic fsm",
+  "version": "2.2.0",
+  "description": "automatic finite state machine",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "build": "tsc --watch",
-    "test": " node --loader ts-node/esm test/test.ts"
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:serve": "vitepress serve docs"
   },
   "types": "index.d.ts",
   "repository": {
@@ -28,6 +30,7 @@
   "devDependencies": {
     "@types/node": "*",
     "ts-node": "^10.8.1",
-    "typescript": "^4.7.4"
+    "typescript": "^4.7.4",
+    "vitepress": "1.0.0-alpha.4"
   }
 }

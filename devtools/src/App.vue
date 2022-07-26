@@ -156,7 +156,7 @@ function updateCheckedKeys(keys: string[]) {
   columns.value.unshift({ title: "Time", key: "time", width: 130 });
 }
 watchEffect(() => {
-  if (divRef.value && currentFSM.value)
+  if (divRef.value && currentFSM.value && currentFSM.value.diagram.length)
     mermaid.mermaidAPI.render('mermaid', ['stateDiagram-v2', ...currentFSM.value.diagram, `note left of ${currentFSM.value.state.state} : 🚩`].join('\n'), function (svgCode: string) {
       divRef.value.innerHTML = svgCode;
     });
@@ -179,6 +179,38 @@ function onSelected(keys: string[]) {
   updateCheckedKeys(keys);
 }
 const checkedKeys = ref([] as string[]);
+async function copy() {
+  //@ts-ignore
+  navigator.permissions.query({ name: 'clipboard-write' }).then(permissionStatus => {
+    if (permissionStatus.state == 'granted') {
+      navigator.clipboard.writeText(JSON.stringify(allHistory));
+    } else {
+      alert("You must grant clipboard permission to copy data");
+    }
+  });
+}
+async function paste() {
+  //@ts-ignore
+  const permissionStatus = await navigator.permissions.query({ name: 'clipboard-read' });
+  if (permissionStatus.state == 'granted') {
+    const text = await navigator.clipboard.readText();
+    clearAll();
+    const data = JSON.parse(text);
+    for (const d of data) {
+      const [_group, name] = d.key.split('®️');
+      if (!group[_group]) {
+        group[_group] = { key: _group, label: _group, children: [] };
+        fsmGroup.push(group[_group]);
+      };
+      allHistory.push(d);
+      group[data.group].children?.push({ key: d.key, label: name, isLeaf: true });
+      if (!fsms[d.key]) fsms[d.key] = { group: _group, name, key: d.key, state: d.state, history: [d.state], diagram: [] };
+      else fsms[d.key].history.push(d.state);
+    }
+  } else {
+    alert("You must grant clipboard permission to paste data");
+  }
+}
 </script>
 
 <template>
@@ -192,6 +224,8 @@ const checkedKeys = ref([] as string[]);
           {{ connected ? "已连接" : "未连接" }}
         </n-tag>
         <n-button size="small" @click="clearAll">清空</n-button>
+        <n-button size="small" @click="copy">复制到剪贴板</n-button>
+        <n-button size="small" @click="paste">从剪贴板读取</n-button>
       </n-space>
     </n-layout-header>
     <n-layout has-sider>
@@ -200,7 +234,8 @@ const checkedKeys = ref([] as string[]);
           @update:selected-keys="onSelected" @update:checked-keys="updateCheckedKeys" default-expand-all />
       </n-layout-sider>
       <n-layout-content content-style="padding: 24px;">
-        <n-data-table single-column :single-line="false" :data="data" :columns="columns" v-if="checked.length > 1"> </n-data-table>
+        <n-data-table single-column :single-line="false" :data="data" :columns="columns" v-if="checked.length > 1">
+        </n-data-table>
         <n-space v-else>
           <n-timeline v-if="currentFSM">
             <n-timeline-item v-for="state in currentFSM.history" :content="state.note" :title="state.state"

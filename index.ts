@@ -98,6 +98,29 @@ export function ChangeState(from: string | string[], to: string) {
     };
   };
 }
+//包含状态，即只在此种状态下方可调用函数
+export function Includes(...states: string[]) {
+  return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => {
+    const origin = descriptor.value;
+    const action = propertyKey as string;
+    descriptor.value = function (this: IAFSM, ...arg: any[]) {
+      if (!states.includes(this.state.toString())) throw new Error(`${this.name} ${action} faild: current state ${this.state} not in ${states}`);
+      return origin.apply(this, arg);
+    };
+  };
+}
+//排除状态，即不在此种状态下方可调用函数
+export function Excludes(...states: string[]) {
+  return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => {
+    const origin = descriptor.value;
+    const action = propertyKey as string;
+    descriptor.value = async function (this: IAFSM, ...arg: any[]) {
+      if (states.includes(this.state.toString())) throw new Error(`${this.name} ${action} faild: current state ${this.state} in ${states}`);
+      return origin.apply(this, arg);
+    };
+  };
+}
+
 const sendDevTools = (() => {
   //@ts-ignore
   const hasDevTools = typeof window !== 'undefined' && window['__AFSM__'];
