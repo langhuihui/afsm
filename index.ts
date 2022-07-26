@@ -13,6 +13,11 @@ export class MiddleState {
     return `${this.action}ing`;
   }
 }
+export class FSMError extends Error {
+  constructor(public state: State, public message: string, public cause?: Error) {
+    super(message);
+  }
+}
 const stateDiagram = new Map<Object, { from: string | string[], to: string, action: string; }[]>();
 export function ChangeState(from: string | string[], to: string) {
   return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => {
@@ -74,9 +79,9 @@ export function ChangeState(from: string | string[], to: string) {
       if (Array.isArray(from)) {
         if (from.length == 0) {
           if (this.abortCtrl) this.abortCtrl.aborted = true;
-        } else if ((typeof this.state != "string" || !from.includes(this.state))) throw new Error(`${this.name} ${action} to ${to} faild: current state ${this._state} not in from config`);
+        } else if ((typeof this.state != "string" || !from.includes(this.state))) throw new FSMError(this._state, `${this.name} ${action} to ${to} faild: current state ${this._state} not in from config`);
       } else {
-        if (from !== this.state) throw new Error(`${this.name} ${action} to ${to} faild: current state ${this._state} not from ${from}`);
+        if (from !== this.state) throw new FSMError(this._state, `${this.name} ${action} to ${to} faild: current state ${this._state} not from ${from}`);
       }
       const old = this.state;
       setState.call(this, new MiddleState(old, to, action));
@@ -93,7 +98,7 @@ export function ChangeState(from: string | string[], to: string) {
         return this._cacheResult;
       } catch (err) {
         setState.call(this, old, String(err));
-        throw err;
+        throw new FSMError(this._state, `action '${action}' failed`, err instanceof Error ? err : new Error(String(err)));
       }
     };
   };
@@ -104,7 +109,7 @@ export function Includes(...states: string[]) {
     const origin = descriptor.value;
     const action = propertyKey as string;
     descriptor.value = function (this: IAFSM, ...arg: any[]) {
-      if (!states.includes(this.state.toString())) throw new Error(`${this.name} ${action} faild: current state ${this.state} not in ${states}`);
+      if (!states.includes(this.state.toString())) throw new FSMError(this.state, `${this.name} ${action} faild: current state ${this.state} not in ${states}`);
       return origin.apply(this, arg);
     };
   };
@@ -115,7 +120,7 @@ export function Excludes(...states: string[]) {
     const origin = descriptor.value;
     const action = propertyKey as string;
     descriptor.value = async function (this: IAFSM, ...arg: any[]) {
-      if (states.includes(this.state.toString())) throw new Error(`${this.name} ${action} faild: current state ${this.state} in ${states}`);
+      if (states.includes(this.state.toString())) throw new FSMError(this.state, `${this.name} ${action} faild: current state ${this.state} in ${states}`);
       return origin.apply(this, arg);
     };
   };

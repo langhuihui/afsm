@@ -15,6 +15,17 @@ export class MiddleState {
         return `${this.action}ing`;
     }
 }
+export class FSMError extends Error {
+    state;
+    message;
+    cause;
+    constructor(state, message, cause) {
+        super(message);
+        this.state = state;
+        this.message = message;
+        this.cause = cause;
+    }
+}
 const stateDiagram = new Map();
 export function ChangeState(from, to) {
     return (target, propertyKey, descriptor) => {
@@ -82,11 +93,11 @@ export function ChangeState(from, to) {
                         this.abortCtrl.aborted = true;
                 }
                 else if ((typeof this.state != "string" || !from.includes(this.state)))
-                    throw new Error(`${this.name} ${action} to ${to} faild: current state ${this._state} not in from config`);
+                    throw new FSMError(this._state, `${this.name} ${action} to ${to} faild: current state ${this._state} not in from config`);
             }
             else {
                 if (from !== this.state)
-                    throw new Error(`${this.name} ${action} to ${to} faild: current state ${this._state} not from ${from}`);
+                    throw new FSMError(this._state, `${this.name} ${action} to ${to} faild: current state ${this._state} not from ${from}`);
             }
             const old = this.state;
             setState.call(this, new MiddleState(old, to, action));
@@ -105,8 +116,32 @@ export function ChangeState(from, to) {
             }
             catch (err) {
                 setState.call(this, old, String(err));
-                throw err;
+                throw new FSMError(this._state, `action '${action}' failed`, err instanceof Error ? err : new Error(String(err)));
             }
+        };
+    };
+}
+//包含状态，即只在此种状态下方可调用函数
+export function Includes(...states) {
+    return (target, propertyKey, descriptor) => {
+        const origin = descriptor.value;
+        const action = propertyKey;
+        descriptor.value = function (...arg) {
+            if (!states.includes(this.state.toString()))
+                throw new FSMError(this.state, `${this.name} ${action} faild: current state ${this.state} not in ${states}`);
+            return origin.apply(this, arg);
+        };
+    };
+}
+//排除状态，即不在此种状态下方可调用函数
+export function Excludes(...states) {
+    return (target, propertyKey, descriptor) => {
+        const origin = descriptor.value;
+        const action = propertyKey;
+        descriptor.value = async function (...arg) {
+            if (states.includes(this.state.toString()))
+                throw new FSMError(this.state, `${this.name} ${action} faild: current state ${this.state} in ${states}`);
+            return origin.apply(this, arg);
         };
     };
 }
@@ -166,3 +201,4 @@ export class FSM extends EventEmitter {
         return this._state;
     }
 }
+//# sourceMappingURL=index.js.map

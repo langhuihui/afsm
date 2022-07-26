@@ -29,3 +29,4 @@ __decorate([
 __decorate([
     ChangeState([], FSM.OFF)
 ], SetInterval.prototype, "stop", null);
+//# sourceMappingURL=setInterval.js.map
