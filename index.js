@@ -1,5 +1,7 @@
 import EventEmitter from 'eventemitter3';
 const instance = Symbol('instance');
+const abortCtrl = Symbol('abortCtrl');
+const cacheResult = Symbol('cacheResult');
 // 中间过渡状态
 export class MiddleState {
     oldState;
@@ -86,37 +88,38 @@ export function ChangeState(from, to) {
         descriptor.value = async function (...arg) {
             // if (typeof this.state != "string") throw new Error(`${this.name} ${action} to ${to} faild: last action ${this.state.action} to ${this.state.newState} not complete`);
             if (this.state === to)
-                return this._cacheResult;
+                return this[cacheResult];
             if (Array.isArray(from)) {
                 if (from.length == 0) {
-                    if (this.abortCtrl)
-                        this.abortCtrl.aborted = true;
+                    if (this[abortCtrl])
+                        this[abortCtrl].aborted = true;
                 }
                 else if ((typeof this.state != "string" || !from.includes(this.state)))
-                    throw new FSMError(this._state, `${this.name} ${action} to ${to} faild: current state ${this._state} not in from config`);
+                    throw new FSMError(this._state, `${this.name} ${action} to ${to} failed: current state ${this._state} not in from config`);
             }
             else {
                 if (from !== this.state)
-                    throw new FSMError(this._state, `${this.name} ${action} to ${to} faild: current state ${this._state} not from ${from}`);
+                    throw new FSMError(this._state, `${this.name} ${action} to ${to} failed: current state ${this._state} not from ${from}`);
             }
             const old = this.state;
             setState.call(this, new MiddleState(old, to, action));
             const abort = { aborted: false };
-            this.abortCtrl = abort;
+            this[abortCtrl] = abort;
             try {
-                this._cacheResult = await origin.apply(this, arg);
+                this[cacheResult] = await origin.apply(this, arg);
                 if (abort.aborted) {
-                    return this._cacheResult;
+                    return this[cacheResult];
                 }
                 else {
-                    this.abortCtrl = void 0;
+                    this[abortCtrl] = void 0;
                 }
                 setState.call(this, to);
-                return this._cacheResult;
+                return this[cacheResult];
             }
             catch (err) {
-                setState.call(this, old, String(err));
-                throw new FSMError(this._state, `action '${action}' failed`, err instanceof Error ? err : new Error(String(err)));
+                const msg = err instanceof Error ? err.message : String(err);
+                setState.call(this, old, msg);
+                throw new FSMError(this._state, `action '${action}' failed :${msg}`, err instanceof Error ? err : new Error(msg));
             }
         };
     };
@@ -128,7 +131,7 @@ export function Includes(...states) {
         const action = propertyKey;
         descriptor.value = function (...arg) {
             if (!states.includes(this.state.toString()))
-                throw new FSMError(this.state, `${this.name} ${action} faild: current state ${this.state} not in ${states}`);
+                throw new FSMError(this.state, `${this.name} ${action} failed: current state ${this.state} not in ${states}`);
             return origin.apply(this, arg);
         };
     };
@@ -140,7 +143,7 @@ export function Excludes(...states) {
         const action = propertyKey;
         descriptor.value = async function (...arg) {
             if (states.includes(this.state.toString()))
-                throw new FSMError(this.state, `${this.name} ${action} faild: current state ${this.state} in ${states}`);
+                throw new FSMError(this.state, `${this.name} ${action} failed: current state ${this.state} in ${states}`);
             return origin.apply(this, arg);
         };
     };
@@ -176,8 +179,8 @@ export class FSM extends EventEmitter {
     static ON = "on";
     static OFF = "off";
     _state = FSM.INIT;
-    _cacheResult;
-    abortCtrl;
+    [cacheResult];
+    [abortCtrl];
     constructor(name, groupName) {
         super();
         this.name = name;
