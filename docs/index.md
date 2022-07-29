@@ -3,7 +3,7 @@ layout: home
 
 hero:
   name: AFSM
-  text: Automatic finite state machine
+  text: Automatic Finite State Machine
   tagline: Easy to understand and easy to use
   image:
     src: /logo.png
@@ -15,6 +15,9 @@ hero:
     - theme: alt
       text: View on GitHub
       link: https://github.com/langhuihui/afsm
+    - theme: alt
+      text: Watch Video
+      link: https://www.bilibili.com/video/BV1kv4y1T7v4
 features:
   - icon: ⚡️
     title: Very powerful
@@ -26,3 +29,13 @@ features:
     title: Visual browser extension panel
     details: You can view the status change history
 ---
+
+![code](./home.png)
+
+<style>
+  img {
+    margin-top: 50px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+</style>

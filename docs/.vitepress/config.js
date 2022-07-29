@@ -1,6 +1,6 @@
 export default {
   title: 'AFSM',
-  description: 'an intelligence finite state machine',
+  description: 'Automatic Finite State Machine',
   themeConfig: {
     nav: [
       { text: 'Guide', link: '/guide' },
@@ -10,6 +10,10 @@ export default {
           { text: 'Connection', link: '/samples/' },
         ]
       }
-    ]
+    ],
+    footer: {
+      message: 'Released under the MIT License.',
+      copyright: 'Copyright © 2022-present dexter'
+    }
   }
 };
