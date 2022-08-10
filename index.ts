@@ -90,12 +90,14 @@ export function ChangeState(from: string | string[], to: string) {
       const abort = { aborted: false };
       this[abortCtrl] = abort;
       try {
-        this[cacheResult] = await origin.apply(this, arg);
-        if (abort.aborted) {
+        const result = origin.apply(this, arg);
+        if (result instanceof Promise)
+          this[cacheResult] = await result;
+        else this[cacheResult] = result;
+        if (abort.aborted)
           return this[cacheResult];
-        } else {
+        else
           this[abortCtrl] = void 0;
-        }
         setState.call(this, to);
         return this[cacheResult];
       } catch (err) {

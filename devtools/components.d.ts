@@ -24,4 +24,5 @@ declare module '@vue/runtime-core' {
     NTree: typeof import('naive-ui')['NTree']
     Suffix: typeof import('./src/components/Suffix.vue')['default']
   }
+
 }
