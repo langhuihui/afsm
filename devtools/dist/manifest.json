@@ -10,7 +10,7 @@
   "background": {
     "scripts": ["background.js"]
   },
-  "permissions": ["tabs", "<all_urls>", "clipboardWrite", "clipboardRead"],
+  "permissions": ["tabs", "<all_urls>", "clipboardWrite", "clipboardRead", "downloads"],
   "devtools_page": "devtools-page.html",
   "content_scripts": [
     {

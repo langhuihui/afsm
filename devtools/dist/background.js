@@ -32,7 +32,7 @@ chrome.runtime.onConnect.addListener(port => {
     port.onMessage.addListener(msg => {
       ports[tabId][1].postMessage(msg);
     });
-    if(ports[tabId][1]){
+    if (ports[tabId][1]) {
       port.postMessage('🎟️');
     }
   } else {
@@ -64,3 +64,20 @@ chrome.runtime.onConnect.addListener(port => {
 function isNumeric(str) {
   return +str + '' === str;
 }
+
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+  const { content } = message;
+  switch (message.type) {
+    case 'download': {
+      const blob = new Blob([content], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      chrome.downloads.download({
+        url,
+        filename: 'data',
+      });
+      break;
+    }
+    default:
+      console.warn('unknown message type ' + message.type);
+  }
+});

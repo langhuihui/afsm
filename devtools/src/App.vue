@@ -211,6 +211,15 @@ async function paste() {
     alert("You must grant clipboard permission to paste data");
   }
 }
+async function download() {
+  //@ts-ignore
+  // safe size limit: 50 MB. ref: https://stackoverflow.com/questions/31925936/is-there-a-size-limit-like-32bytes-or-64bytes-for-message-passing-between-conte
+  const message = {
+    type: 'download',
+    content: JSON.stringify(allHistory)
+  };
+  chrome.runtime.sendMessage(message);
+}
 </script>
 
 <template>
@@ -226,6 +235,7 @@ async function paste() {
         <n-button size="small" @click="clearAll">清空</n-button>
         <n-button size="small" @click="copy">复制到剪贴板</n-button>
         <n-button size="small" @click="paste">从剪贴板读取</n-button>
+        <n-button size="small" @click="download">下载</n-button>
       </n-space>
     </n-layout-header>
     <n-layout has-sider>
