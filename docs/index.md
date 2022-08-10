@@ -30,7 +30,7 @@ features:
     details: You can view the status change history
 ---
 
-![code](./home.png)
+![code](/home.png)
 
 <style>
   img {
