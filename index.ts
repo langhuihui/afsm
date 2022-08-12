@@ -21,6 +21,7 @@ export class FSMError extends Error {
   }
 }
 const stateDiagram = new Map<Object, { from: string | string[], to: string, action: string; }[]>();
+const originPromise = Object.getPrototypeOf((async () => { })()).constructor;
 export function ChangeState(from: string | string[], to: string) {
   return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => {
     const action = propertyKey as string;
@@ -91,7 +92,7 @@ export function ChangeState(from: string | string[], to: string) {
       this[abortCtrl] = abort;
       try {
         const result = origin.apply(this, arg);
-        if (result instanceof Promise)
+        if (result instanceof originPromise)
           this[cacheResult] = await result;
         else this[cacheResult] = result;
         if (abort.aborted)
