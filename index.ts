@@ -6,6 +6,9 @@ const instance = Symbol('instance');
 const abortCtrl = Symbol('abortCtrl');
 const cacheResult = Symbol('cacheResult');
 export type State = string | MiddleState;
+export interface ChangeOption {
+  ignoreError?: boolean;
+}
 // 中间过渡状态
 export class MiddleState {
   error: any;
@@ -22,7 +25,7 @@ export class FSMError extends Error {
 }
 const stateDiagram = new Map<Object, { from: string | string[], to: string, action: string; }[]>();
 const originPromise = Object.getPrototypeOf((async () => { })()).constructor;
-export function ChangeState(from: string | string[], to: string) {
+export function ChangeState(from: string | string[], to: string, opt: ChangeOption = {}) {
   return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => {
     const action = propertyKey as string;
     if (!stateDiagram.has(target)) {
@@ -79,13 +82,23 @@ export function ChangeState(from: string | string[], to: string) {
     descriptor.value = async function (this: IAFSM, ...arg: any[]) {
       // if (typeof this.state != "string") throw new Error(`${this.name} ${action} to ${to} faild: last action ${this.state.action} to ${this.state.newState} not complete`);
       if (this.state === to) return this[cacheResult];
+      let err: Error | null = null;
       if (Array.isArray(from)) {
         if (from.length == 0) {
           if (this[abortCtrl]) this[abortCtrl].aborted = true;
-        } else if ((typeof this.state != "string" || !from.includes(this.state))) throw new FSMError(this._state, `${this.name} ${action} to ${to} failed: current state ${this._state} not in from config`);
+        } else if ((typeof this.state != "string" || !from.includes(this.state))) {
+          err = new FSMError(this._state, `${this.name} ${action} to ${to} failed: current state ${this._state} not in from config`);
+        }
       } else {
-        if (from !== this.state) throw new FSMError(this._state, `${this.name} ${action} to ${to} failed: current state ${this._state} not from ${from}`);
+        if (from !== this.state) {
+          err = new FSMError(this._state, `${this.name} ${action} to ${to} failed: current state ${this._state} not from ${from}`);
+        }
       }
+      if (err) {
+        if (opt.ignoreError) return err;
+        else throw err;
+      }
+
       const old = this.state;
       setState.call(this, new MiddleState(old, to, action));
       const abort = { aborted: false };
@@ -104,10 +117,15 @@ export function ChangeState(from: string | string[], to: string) {
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         setState.call(this, old, msg);
-        throw new FSMError(this._state, `action '${action}' failed :${msg}`, err instanceof Error ? err : new Error(msg));
+        //err = new FSMError(this._state, `action '${action}' failed :${msg}`, err instanceof Error ? err : new Error(msg));
+        if (opt.ignoreError) return err;
+        else throw err;
       }
     };
   };
+}
+export function tryChangeState(from: string | string[], to: string, opt = { ignoreError: true }) {
+  ChangeState(from, to, opt);
 }
 //包含状态，即只在此种状态下方可调用函数
 export function Includes(...states: string[]) {
