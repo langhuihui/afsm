@@ -168,7 +168,13 @@ function setState(this: FSM, value: State, err?: any) {
   this.emit(FSM.STATECHANGED, value, old, err);
   this.updateDevTools({ value, old, err });
 }
-export class FSM extends EventEmitter {
+
+interface FSMEventTypes {
+  stateChanged: [State, State, any];
+}
+
+export class FSM<EventTypes extends EventEmitter.ValidEventTypes = string | symbol,
+  Context extends any = any> extends EventEmitter<EventTypes | FSMEventTypes, Context> {
   get stateDiagram(): string[] {
     return [];
   }

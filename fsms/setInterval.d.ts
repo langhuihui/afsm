@@ -6,3 +6,4 @@ export declare class SetInterval extends FSM {
     stop(): Promise<void>;
     reset(ms: number, ...args: any[]): Promise<void>;
 }
+//# sourceMappingURL=setInterval.d.ts.map

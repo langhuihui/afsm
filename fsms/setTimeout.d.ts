@@ -7,3 +7,4 @@ export declare class SetTimeout extends FSM {
     stop(): Promise<void>;
     reset(ms: number, ...args: any[]): Promise<void>;
 }
+//# sourceMappingURL=setTimeout.d.ts.map
