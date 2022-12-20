@@ -167,6 +167,30 @@ export function Excludes(...states) {
         };
     };
 }
+//异步状态，即异步函数执行期间，状态为actioning,或者自定义名称
+export function AsyncState(name) {
+    return (target, propertyKey, descriptor) => {
+        const origin = descriptor.value;
+        const action = name || propertyKey;
+        descriptor.value = async function (...arg) {
+            const old = this.state;
+            setState.call(this, action);
+            try {
+                let result = origin.apply(this, arg);
+                if (result instanceof originPromise)
+                    result = await result;
+                setState.call(this, old);
+                return result;
+            }
+            catch (err) {
+                const msg = err instanceof Error ? err.message : String(err);
+                setState.call(this, old, msg);
+                //err = new FSMError(this._state, `action '${action}' failed :${msg}`, err instanceof Error ? err : new Error(msg));
+                throw err;
+            }
+        };
+    };
+}
 const sendDevTools = (() => {
     //@ts-ignore
     const hasDevTools = typeof window !== 'undefined' && window['__AFSM__'];
