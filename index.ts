@@ -8,6 +8,7 @@ const cacheResult = Symbol('cacheResult');
 export type State = string | MiddleState;
 export interface ChangeOption {
   ignoreError?: boolean;
+  action?: string;
 }
 // 中间过渡状态
 export class MiddleState {
@@ -27,7 +28,7 @@ const stateDiagram = new Map<Object, { from: string | string[], to: string, acti
 const originPromise = Object.getPrototypeOf((async () => { })()).constructor;
 export function ChangeState(from: string | string[], to: string, opt: ChangeOption = {}) {
   return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => {
-    const action = propertyKey as string;
+    const action = opt.action || propertyKey as string;
     if (!stateDiagram.has(target)) {
       stateDiagram.set(target, []);
       Object.defineProperty(target, 'stateDiagram', {
@@ -149,8 +150,8 @@ export function Excludes(...states: string[]) {
     };
   };
 }
-//异步状态，即异步函数执行期间，状态为actioning,或者自定义名称
-export function AsyncState(name?: string) {
+//动作状态，即异步函数执行期间，状态为actioning,或者自定义名称，结束后回到原状态
+export function ActionState(name?: string) {
   return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => {
     const origin = descriptor.value;
     const action = name || propertyKey as string;
@@ -163,9 +164,7 @@ export function AsyncState(name?: string) {
         setState.call(this, old);
         return result;
       } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        setState.call(this, old, msg);
-        //err = new FSMError(this._state, `action '${action}' failed :${msg}`, err instanceof Error ? err : new Error(msg));
+        setState.call(this, old, err instanceof Error ? err.message : String(err));
         throw err;
       }
     };

@@ -6,6 +6,7 @@ declare const cacheResult: unique symbol;
 export declare type State = string | MiddleState;
 export interface ChangeOption {
     ignoreError?: boolean;
+    action?: string;
 }
 export declare class MiddleState {
     oldState: State;
@@ -27,7 +28,7 @@ export declare function tryChangeState(from: string | string[], to: string, opt?
 }): void;
 export declare function Includes(...states: string[]): (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => void;
 export declare function Excludes(...states: string[]): (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => void;
-export declare function AsyncState(name?: string): (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => void;
+export declare function ActionState(name?: string): (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => void;
 interface FSMEventTypes {
     stateChanged: [State, State, any];
 }

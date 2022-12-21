@@ -32,7 +32,7 @@ const stateDiagram = new Map();
 const originPromise = Object.getPrototypeOf((async () => { })()).constructor;
 export function ChangeState(from, to, opt = {}) {
     return (target, propertyKey, descriptor) => {
-        const action = propertyKey;
+        const action = opt.action || propertyKey;
         if (!stateDiagram.has(target)) {
             stateDiagram.set(target, []);
             Object.defineProperty(target, 'stateDiagram', {
@@ -167,8 +167,8 @@ export function Excludes(...states) {
         };
     };
 }
-//异步状态，即异步函数执行期间，状态为actioning,或者自定义名称
-export function AsyncState(name) {
+//动作状态，即异步函数执行期间，状态为actioning,或者自定义名称，结束后回到原状态
+export function ActionState(name) {
     return (target, propertyKey, descriptor) => {
         const origin = descriptor.value;
         const action = name || propertyKey;
@@ -183,9 +183,7 @@ export function AsyncState(name) {
                 return result;
             }
             catch (err) {
-                const msg = err instanceof Error ? err.message : String(err);
-                setState.call(this, old, msg);
-                //err = new FSMError(this._state, `action '${action}' failed :${msg}`, err instanceof Error ? err : new Error(msg));
+                setState.call(this, old, err instanceof Error ? err.message : String(err));
                 throw err;
             }
         };
