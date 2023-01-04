@@ -106,7 +106,9 @@ export function ChangeState(from, to, opt = {}) {
                 }
             }
             if (err) {
-                if (opt.ignoreError)
+                if (opt.fail)
+                    opt.fail.call(this, err);
+                else if (opt.ignoreError)
                     return err;
                 else
                     throw err;
@@ -126,13 +128,15 @@ export function ChangeState(from, to, opt = {}) {
                 else
                     this[abortCtrl] = void 0;
                 setState.call(this, to);
+                opt.success?.call(this, this[cacheResult]);
                 return this[cacheResult];
             }
             catch (err) {
                 const msg = err instanceof Error ? err.message : String(err);
                 setState.call(this, old, msg);
-                //err = new FSMError(this._state, `action '${action}' failed :${msg}`, err instanceof Error ? err : new Error(msg));
-                if (opt.ignoreError)
+                if (opt.fail)
+                    opt.fail.call(this, new FSMError(this._state, `action '${action}' failed :${msg}`, err instanceof Error ? err : new Error(msg)));
+                else if (opt.ignoreError)
                     return err;
                 else
                     throw err;
@@ -243,6 +247,9 @@ export class FSM extends EventEmitter {
     }
     get state() {
         return this._state;
+    }
+    set state(value) {
+        setState.call(this, value);
     }
 }
 //# sourceMappingURL=index.js.map

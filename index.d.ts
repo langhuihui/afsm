@@ -7,6 +7,8 @@ export declare type State = string | MiddleState;
 export interface ChangeOption {
     ignoreError?: boolean;
     action?: string;
+    success?: (this: IAFSM, result: any) => void;
+    fail?: (this: IAFSM, err: FSMError) => void;
 }
 export declare class MiddleState {
     oldState: State;
@@ -23,9 +25,7 @@ export declare class FSMError extends Error {
     constructor(state: State, message: string, cause?: Error | undefined);
 }
 export declare function ChangeState(from: string | string[], to: string, opt?: ChangeOption): (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => void;
-export declare function tryChangeState(from: string | string[], to: string, opt?: {
-    ignoreError: boolean;
-}): void;
+export declare function tryChangeState(from: string | string[], to: string, opt?: ChangeOption): void;
 export declare function Includes(...states: string[]): (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => void;
 export declare function Excludes(...states: string[]): (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => void;
 export declare function ActionState(name?: string): (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => void;
@@ -36,11 +36,11 @@ export declare class FSM<EventTypes extends EventEmitter.ValidEventTypes = strin
     name?: string | undefined;
     groupName?: string | undefined;
     get stateDiagram(): string[];
-    static STATECHANGED: string;
-    static UPDATEAFSM: string;
-    static INIT: string;
-    static ON: string;
-    static OFF: string;
+    static readonly STATECHANGED = "stateChanged";
+    static readonly UPDATEAFSM = "updateAFSM";
+    static readonly INIT = "[*]";
+    static readonly ON = "on";
+    static readonly OFF = "off";
     _state: State;
     [cacheResult]: any;
     [abortCtrl]?: {
@@ -49,6 +49,7 @@ export declare class FSM<EventTypes extends EventEmitter.ValidEventTypes = strin
     constructor(name?: string | undefined, groupName?: string | undefined);
     updateDevTools(payload?: any): void;
     get state(): State;
+    set state(value: State);
 }
 export {};
 //# sourceMappingURL=index.d.ts.map

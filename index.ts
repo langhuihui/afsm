@@ -9,6 +9,8 @@ export type State = string | MiddleState;
 export interface ChangeOption {
   ignoreError?: boolean;
   action?: string;
+  success?: (this: IAFSM, result: any) => void;
+  fail?: (this: IAFSM, err: FSMError) => void;
 }
 // 中间过渡状态
 export class MiddleState {
@@ -83,7 +85,7 @@ export function ChangeState(from: string | string[], to: string, opt: ChangeOpti
     descriptor.value = async function (this: IAFSM, ...arg: any[]) {
       // if (typeof this.state != "string") throw new Error(`${this.name} ${action} to ${to} faild: last action ${this.state.action} to ${this.state.newState} not complete`);
       if (this.state === to) return this[cacheResult];
-      let err: Error | null = null;
+      let err: FSMError | null = null;
       if (Array.isArray(from)) {
         if (from.length == 0) {
           if (this[abortCtrl]) this[abortCtrl].aborted = true;
@@ -96,7 +98,8 @@ export function ChangeState(from: string | string[], to: string, opt: ChangeOpti
         }
       }
       if (err) {
-        if (opt.ignoreError) return err;
+        if (opt.fail) opt.fail.call(this, err);
+        else if (opt.ignoreError) return err;
         else throw err;
       }
 
@@ -114,18 +117,19 @@ export function ChangeState(from: string | string[], to: string, opt: ChangeOpti
         else
           this[abortCtrl] = void 0;
         setState.call(this, to);
+        opt.success?.call(this, this[cacheResult]);
         return this[cacheResult];
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         setState.call(this, old, msg);
-        //err = new FSMError(this._state, `action '${action}' failed :${msg}`, err instanceof Error ? err : new Error(msg));
-        if (opt.ignoreError) return err;
+        if (opt.fail) opt.fail.call(this, new FSMError(this._state, `action '${action}' failed :${msg}`, err instanceof Error ? err : new Error(msg)));
+        else if (opt.ignoreError) return err;
         else throw err;
       }
     };
   };
 }
-export function tryChangeState(from: string | string[], to: string, opt = { ignoreError: true }) {
+export function tryChangeState(from: string | string[], to: string, opt: ChangeOption = { ignoreError: true }) {
   ChangeState(from, to, opt);
 }
 //包含状态，即只在此种状态下方可调用函数
@@ -199,11 +203,11 @@ export class FSM<EventTypes extends EventEmitter.ValidEventTypes = string | symb
   get stateDiagram(): string[] {
     return [];
   }
-  static STATECHANGED = 'stateChanged';
-  static UPDATEAFSM = 'updateAFSM';
-  static INIT = "[*]";//初始状态
-  static ON = "on";
-  static OFF = "off";
+  static readonly STATECHANGED = 'stateChanged';
+  static readonly UPDATEAFSM = 'updateAFSM';
+  static readonly INIT = "[*]";//初始状态
+  static readonly ON = "on";
+  static readonly OFF = "off";
   _state: State = FSM.INIT;
   [cacheResult]: any;
   [abortCtrl]?: { aborted: boolean; };
@@ -222,5 +226,8 @@ export class FSM<EventTypes extends EventEmitter.ValidEventTypes = string | symb
   }
   get state() {
     return this._state;
+  }
+  set state(value: State) {
+    setState.call(this, value);
   }
 }
