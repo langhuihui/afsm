@@ -9,8 +9,8 @@ export type State = string | MiddleState;
 export interface ChangeOption {
   ignoreError?: boolean;
   action?: string;
-  success?: (this: IAFSM, result: any) => void;
-  fail?: (this: IAFSM, err: FSMError) => void;
+  success?: (result: any) => any;
+  fail?: (err: FSMError) => any;
 }
 // 中间过渡状态
 export class MiddleState {
