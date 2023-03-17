@@ -33,76 +33,34 @@ const originPromise = Object.getPrototypeOf((async () => { })()).constructor;
 export function ChangeState(from, to, opt = {}) {
     return (target, propertyKey, descriptor) => {
         const action = opt.action || propertyKey;
-        if (!stateDiagram.has(target)) {
-            stateDiagram.set(target, []);
-            Object.defineProperty(target, 'stateDiagram', {
-                configurable: true,
-                get() {
-                    let result = new Set();
-                    let plain = [];
-                    let forceTo = [];
-                    const stateConfig = stateDiagram.get(target);
-                    const allState = new Set();
-                    Object.defineProperty(target, 'allStates', { value: allState });
-                    const parent = Object.getPrototypeOf(target);
-                    if (stateDiagram.has(parent)) {
-                        parent.stateDiagram.forEach((stateDesc) => result.add(stateDesc));
-                        parent.allStates.forEach((state) => allState.add(state));
-                    }
-                    stateConfig.forEach(({ from, to, action }) => {
-                        if (typeof from === 'string') {
-                            plain.push({ from, to, action });
-                        }
-                        else {
-                            if (from.length) {
-                                from.forEach(f => {
-                                    plain.push({ from: f, to, action });
-                                });
-                            }
-                            else
-                                forceTo.push({ to, action });
-                        }
-                    });
-                    plain.forEach(({ from, to, action }) => {
-                        allState.add(from);
-                        allState.add(to);
-                        allState.add(action + "ing");
-                        result.add(`${from} --> ${action}ing : ${action}`);
-                        result.add(`${action}ing --> ${to} : ${action} 🟢`);
-                        result.add(`${action}ing --> ${from} : ${action} 🔴`);
-                    });
-                    forceTo.forEach(({ to, action }) => {
-                        result.add(`${action}ing --> ${to} : ${action} 🟢`);
-                        allState.forEach(f => {
-                            if (f !== to)
-                                result.add(`${f} --> ${action}ing : ${action}`);
-                        });
-                    });
-                    const value = [...result];
-                    Object.defineProperty(target, 'stateDiagram', { value });
-                    return value;
-                }
-            });
+        if (!opt.context) {
+            const stateConfig = stateDiagram.get(target) || [];
+            if (!stateDiagram.has(target))
+                stateDiagram.set(target, stateConfig);
+            stateConfig.push({ from, to, action });
         }
-        stateDiagram.get(target).push({ from, to, action });
         const origin = descriptor.value;
         descriptor.value = async function (...arg) {
-            // if (typeof this.state != "string") throw new Error(`${this.name} ${action} to ${to} faild: last action ${this.state.action} to ${this.state.newState} not complete`);
-            if (this.state === to)
-                return this[cacheResult];
+            let fsm = this;
+            if (opt.context) {
+                // @ts-ignore
+                fsm = FSM.get(typeof opt.context === 'function' ? opt.context.call(this, ...arg) : opt.context);
+            }
+            if (fsm.state === to)
+                return fsm[cacheResult];
             let err = null;
             if (Array.isArray(from)) {
                 if (from.length == 0) {
-                    if (this[abortCtrl])
-                        this[abortCtrl].aborted = true;
+                    if (fsm[abortCtrl])
+                        fsm[abortCtrl].aborted = true;
                 }
-                else if ((typeof this.state != "string" || !from.includes(this.state))) {
-                    err = new FSMError(this._state, `${this.name} ${action} to ${to} failed: current state ${this._state} not in from config`);
+                else if ((typeof fsm.state != "string" || !from.includes(fsm.state))) {
+                    err = new FSMError(fsm._state, `${fsm.name} ${action} to ${to} failed: current state ${fsm._state} not in from config`);
                 }
             }
             else {
-                if (from !== this.state) {
-                    err = new FSMError(this._state, `${this.name} ${action} to ${to} failed: current state ${this._state} not from ${from}`);
+                if (from !== fsm.state) {
+                    err = new FSMError(fsm._state, `${fsm.name} ${action} to ${to} failed: current state ${fsm._state} not from ${from}`);
                 }
             }
             if (err) {
@@ -113,29 +71,29 @@ export function ChangeState(from, to, opt = {}) {
                 else
                     throw err;
             }
-            const old = this.state;
-            setState.call(this, new MiddleState(old, to, action));
+            const old = fsm.state;
+            setState.call(fsm, new MiddleState(old, to, action));
             const abort = { aborted: false };
-            this[abortCtrl] = abort;
+            fsm[abortCtrl] = abort;
             try {
                 const result = origin.apply(this, arg);
                 if (result instanceof originPromise)
-                    this[cacheResult] = await result;
+                    fsm[cacheResult] = await result;
                 else
-                    this[cacheResult] = result;
+                    fsm[cacheResult] = result;
                 if (abort.aborted)
-                    return this[cacheResult];
+                    return fsm[cacheResult];
                 else
-                    this[abortCtrl] = void 0;
-                setState.call(this, to);
-                opt.success?.call(this, this[cacheResult]);
-                return this[cacheResult];
+                    fsm[abortCtrl] = void 0;
+                setState.call(fsm, to);
+                opt.success?.call(this, fsm[cacheResult]);
+                return fsm[cacheResult];
             }
             catch (err) {
                 const msg = err instanceof Error ? err.message : String(err);
-                setState.call(this, old, msg);
+                setState.call(fsm, old, msg);
                 if (opt.fail)
-                    opt.fail.call(this, new FSMError(this._state, `action '${action}' failed :${msg}`, err instanceof Error ? err : new Error(msg)));
+                    opt.fail.call(this, new FSMError(fsm._state, `action '${action}' failed :${msg}`, err instanceof Error ? err : new Error(msg)));
                 else if (opt.ignoreError)
                     return err;
                 else
@@ -216,23 +174,89 @@ export class FSM extends EventEmitter {
     name;
     groupName;
     get stateDiagram() {
-        return [];
+        const protoType = Object.getPrototypeOf(this);
+        const stateConfig = stateDiagram.get(protoType) || [];
+        let result = new Set();
+        let plain = [];
+        let forceTo = [];
+        const allState = new Set();
+        const parent = Object.getPrototypeOf(protoType);
+        if (stateDiagram.has(parent)) {
+            parent.stateDiagram.forEach((stateDesc) => result.add(stateDesc));
+            parent.allStates.forEach((state) => allState.add(state));
+        }
+        stateConfig.forEach(({ from, to, action }) => {
+            if (typeof from === 'string') {
+                plain.push({ from, to, action });
+            }
+            else {
+                if (from.length) {
+                    from.forEach(f => {
+                        plain.push({ from: f, to, action });
+                    });
+                }
+                else
+                    forceTo.push({ to, action });
+            }
+        });
+        plain.forEach(({ from, to, action }) => {
+            allState.add(from);
+            allState.add(to);
+            allState.add(action + "ing");
+            result.add(`${from} --> ${action}ing : ${action}`);
+            result.add(`${action}ing --> ${to} : ${action} 🟢`);
+            result.add(`${action}ing --> ${from} : ${action} 🔴`);
+        });
+        forceTo.forEach(({ to, action }) => {
+            result.add(`${action}ing --> ${to} : ${action} 🟢`);
+            allState.forEach(f => {
+                if (f !== to)
+                    result.add(`${f} --> ${action}ing : ${action}`);
+            });
+        });
+        const value = [...result];
+        Object.defineProperty(this, 'stateDiagram', { value });
+        return value;
     }
     static STATECHANGED = 'stateChanged';
     static UPDATEAFSM = 'updateAFSM';
     static INIT = "[*]"; //初始状态
     static ON = "on";
     static OFF = "off";
+    static instances = new Map();
+    static instances2 = new WeakMap();
+    static get(context) {
+        let fsm;
+        if (typeof context === 'string') {
+            fsm = FSM.instances.get(context);
+            if (!fsm) {
+                FSM.instances.set(context, fsm = new FSM(context, undefined, Object.create(FSM.prototype)));
+            }
+        }
+        else {
+            fsm = FSM.instances2.get(context);
+            if (!fsm) {
+                FSM.instances2.set(context, fsm = new FSM(context.constructor.name, undefined, Object.create(FSM.prototype)));
+            }
+        }
+        return fsm;
+    }
+    static getState(context) {
+        return FSM.get(context)?.state;
+    }
     _state = FSM.INIT;
     [cacheResult];
     [abortCtrl];
-    constructor(name, groupName) {
+    constructor(name, groupName, prototype) {
         super();
         this.name = name;
         this.groupName = groupName;
         if (!name)
             name = Date.now().toString(36);
-        const prototype = Object.getPrototypeOf(this);
+        if (!prototype)
+            prototype = Object.getPrototypeOf(this);
+        else
+            Object.setPrototypeOf(this, prototype);
         if (!groupName)
             this.groupName = this.constructor.name;
         const names = prototype[instance];

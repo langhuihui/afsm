@@ -1,14 +1,16 @@
 import EventEmitter from 'eventemitter3';
-export interface IAFSM extends FSM {
+export interface IFSM extends FSM {
 }
 declare const abortCtrl: unique symbol;
 declare const cacheResult: unique symbol;
 export declare type State = string | MiddleState;
+declare type contextType = string | object;
 export interface ChangeOption {
     ignoreError?: boolean;
     action?: string;
     success?: (result: any) => any;
     fail?: (err: FSMError) => any;
+    context?: ((this: IFSM, ...args: any[]) => contextType) | contextType;
 }
 export declare class MiddleState {
     oldState: State;
@@ -41,12 +43,16 @@ export declare class FSM<EventTypes extends EventEmitter.ValidEventTypes = strin
     static readonly INIT = "[*]";
     static readonly ON = "on";
     static readonly OFF = "off";
+    static instances: Map<string, IFSM>;
+    static instances2: WeakMap<object, IFSM>;
+    static get(context: string | object): IFSM;
+    static getState(context: string | object): State;
     _state: State;
     [cacheResult]: any;
     [abortCtrl]?: {
         aborted: boolean;
     };
-    constructor(name?: string | undefined, groupName?: string | undefined);
+    constructor(name?: string | undefined, groupName?: string | undefined, prototype?: any);
     updateDevTools(payload?: any): void;
     get state(): State;
     set state(value: State);
