@@ -203,7 +203,10 @@ export class FSM<EventTypes extends EventEmitter.ValidEventTypes = string | symb
       });
     });
     const value = [...result];
-    Object.defineProperty(this, 'stateDiagram', { value });
+    Object.defineProperties(protoType, {
+      stateDiagram: { value },
+      allStates: { value: allState }
+    })
     return value;
   }
   static readonly STATECHANGED = 'stateChanged';

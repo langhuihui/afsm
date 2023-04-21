@@ -170,7 +170,7 @@ function setState(value, err) {
     this.emit(FSM.STATECHANGED, value, old, err);
     this.updateDevTools({ value, old, err });
 }
-export class FSM extends EventEmitter {
+class FSM extends EventEmitter {
     name;
     groupName;
     get stateDiagram() {
@@ -215,7 +215,10 @@ export class FSM extends EventEmitter {
             });
         });
         const value = [...result];
-        Object.defineProperty(this, 'stateDiagram', { value });
+        Object.defineProperties(protoType, {
+            stateDiagram: { value },
+            allStates: { value: allState }
+        });
         return value;
     }
     static STATECHANGED = 'stateChanged';
@@ -276,4 +279,5 @@ export class FSM extends EventEmitter {
         setState.call(this, value);
     }
 }
+export { FSM };
 //# sourceMappingURL=index.js.map
