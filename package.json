@@ -1,6 +1,6 @@
 {
   "name": "afsm",
-  "version": "2.4.1",
+  "version": "2.4.2",
   "description": "automatic finite state machine",
   "main": "index.js",
   "type": "module",

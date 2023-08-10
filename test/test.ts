@@ -16,6 +16,13 @@ class Connection extends FSM {
   disconnect() {
     this.reconnectAfter(1000);
   }
+  @ChangeState([FSM.INIT, "stop"], "started", { context: "stuff" })
+  start() {
+  }
+  @ChangeState("started", "stop", { context: "stuff", abortAction: "start" })
+  stop() {
+
+  }
   reconnectAfter(delay: number) {
     setTimeout(() => this.reconnect().then(() => console.log("reconnect success")).catch(() => this.reconnectAfter(delay)), delay);
   }

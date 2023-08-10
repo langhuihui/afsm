@@ -12,13 +12,24 @@ export interface ChangeOption {
   action?: string;
   success?: (result: any) => any;
   fail?: (err: FSMError) => any;
+  /**
+   * 用于组合一组状态，当一个类里面有多个状态机时，可以用此属性来区分
+   */
   context?: ((this: IFSM, ...args: any[]) => contextType) | contextType;
+  /**
+   * 用于中断状态机，当状态机处于中间状态时，调用此函数，会中断状态机。
+   */
+  abortAction?: string;
 }
 
 // 中间过渡状态
 export class MiddleState {
-  error: any;
+  aborted = false;
   constructor(public oldState: State, public newState: string, public action: string) {
+  }
+  abort(fsm: IFSM) {
+    this.aborted = true;
+    setState.call(fsm, this.oldState, new Error(`action '${this.action}' aborted`));
   }
   toString() {
     return `${this.action}ing`;
@@ -30,7 +41,7 @@ export class FSMError extends Error {
   }
 }
 const stateDiagram = new Map<Object, { from: string | string[], to: string, action: string; }[]>();
-const originPromise = Object.getPrototypeOf((async () => { })()).constructor;
+// const originPromise = Object.getPrototypeOf((async () => { })()).constructor;
 export function ChangeState(from: string | string[], to: string, opt: ChangeOption = {}) {
   return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => {
     const action = opt.action || propertyKey as string;
@@ -40,17 +51,22 @@ export function ChangeState(from: string | string[], to: string, opt: ChangeOpti
       stateConfig.push({ from, to, action });
     }
     const origin = descriptor.value;
-    descriptor.value = async function (this: IFSM, ...arg: any[]) {
+    descriptor.value = function (this: IFSM, ...arg: any[]) {
       let fsm = this;
       if (opt.context) {
         // @ts-ignore
         fsm = FSM.get(typeof opt.context === 'function' ? opt.context.call(this, ...arg) : opt.context);
       }
       if (fsm.state === to) return fsm[cacheResult];
+      else if (fsm.state instanceof MiddleState) {
+        if (fsm.state.action == opt.abortAction) {
+          fsm.state.abort(fsm);
+        }
+      }
       let err: FSMError | null = null;
       if (Array.isArray(from)) {
         if (from.length == 0) {
-          if (fsm[abortCtrl]) fsm[abortCtrl].aborted = true;
+          if (fsm.state instanceof MiddleState) fsm.state.abort(fsm);
         } else if ((typeof fsm.state != "string" || !from.includes(fsm.state))) {
           err = new FSMError(fsm._state, `${fsm.name} ${action} to ${to} failed: current state ${fsm._state} not in from config`);
         }
@@ -66,24 +82,23 @@ export function ChangeState(from: string | string[], to: string, opt: ChangeOpti
       }
 
       const old = fsm.state;
-      setState.call(fsm, new MiddleState(old, to, action));
-      const abort = { aborted: false };
-      fsm[abortCtrl] = abort;
+      const middle = new MiddleState(old, to, action);
+      setState.call(fsm, middle);
       try {
         const result = origin.apply(this, arg);
-        if (result instanceof originPromise)
-          fsm[cacheResult] = await result;
-        else fsm[cacheResult] = result;
-        if (abort.aborted)
-          return fsm[cacheResult];
-        else
-          fsm[abortCtrl] = void 0;
-        setState.call(fsm, to);
-        opt.success?.call(this, fsm[cacheResult]);
-        return fsm[cacheResult];
+        const success = (result: any) => {
+          fsm[cacheResult] = result;
+          if (!middle.aborted) {
+            setState.call(fsm, to);
+            opt.success?.call(this, fsm[cacheResult]);
+          }
+          return result;
+        };
+        if ('then' in result) return result.then(success);
+        else return success(result);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        setState.call(fsm, old, msg);
+        setState.call(fsm, old, err);
         if (opt.fail) opt.fail.call(this, new FSMError(fsm._state, `action '${action}' failed :${msg}`, err instanceof Error ? err : new Error(msg)));
         else if (opt.ignoreError) return err;
         else throw err;
@@ -121,16 +136,19 @@ export function ActionState(name?: string) {
   return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => {
     const origin = descriptor.value;
     const action = name || propertyKey as string;
-    descriptor.value = async function (this: IFSM, ...arg: any[]) {
+    descriptor.value = function (this: IFSM, ...arg: any[]) {
       const old = this.state;
       setState.call(this, action);
       try {
         let result = origin.apply(this, arg);
-        if (result instanceof originPromise) result = await result;
-        setState.call(this, old);
-        return result;
+        const success = (result: any) => {
+          setState.call(this, old);
+          return result;
+        };
+        if ('then' in result) return result.then(success);
+        return success(result);
       } catch (err) {
-        setState.call(this, old, err instanceof Error ? err.message : String(err));
+        setState.call(this, old, err);
         throw err;
       }
     };
@@ -153,7 +171,7 @@ function setState(this: FSM, value: State, err?: any) {
   const state = value.toString();
   if (value) this.emit(state, old);
   this.emit(FSM.STATECHANGED, value, old, err);
-  this.updateDevTools({ value, old, err });
+  this.updateDevTools({ value, old, err: err instanceof Error ? err.message : String(err) });
 }
 
 interface FSMEventTypes {
@@ -206,7 +224,7 @@ export class FSM<EventTypes extends EventEmitter.ValidEventTypes = string | symb
     Object.defineProperties(protoType, {
       stateDiagram: { value },
       allStates: { value: allState }
-    })
+    });
     return value;
   }
   static readonly STATECHANGED = 'stateChanged';

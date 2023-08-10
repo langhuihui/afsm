@@ -10,14 +10,22 @@ export interface ChangeOption {
     action?: string;
     success?: (result: any) => any;
     fail?: (err: FSMError) => any;
+    /**
+     * 用于组合一组状态，当一个类里面有多个状态机时，可以用此属性来区分
+     */
     context?: ((this: IFSM, ...args: any[]) => contextType) | contextType;
+    /**
+     * 用于中断状态机，当状态机处于中间状态时，调用此函数，会中断状态机。
+     */
+    abortAction?: string;
 }
 export declare class MiddleState {
     oldState: State;
     newState: string;
     action: string;
-    error: any;
+    aborted: boolean;
     constructor(oldState: State, newState: string, action: string);
+    abort(fsm: IFSM): void;
     toString(): string;
 }
 export declare class FSMError extends Error {
