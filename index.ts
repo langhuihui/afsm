@@ -40,6 +40,9 @@ export class FSMError extends Error {
     super(message);
   }
 }
+function thenAble<T>(val: T | Promise<T>): val is Promise<T> {
+  return typeof val === 'object' && val && 'then' in val;
+}
 const stateDiagram = new Map<Object, { from: string | string[], to: string, action: string; }[]>();
 // const originPromise = Object.getPrototypeOf((async () => { })()).constructor;
 export function ChangeState(from: string | string[], to: string, opt: ChangeOption = {}) {
@@ -94,7 +97,7 @@ export function ChangeState(from: string | string[], to: string, opt: ChangeOpti
           }
           return result;
         };
-        if ('then' in result) return result.then(success);
+        if (thenAble(result)) return result.then(success);
         else return success(result);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -145,7 +148,7 @@ export function ActionState(name?: string) {
           setState.call(this, old);
           return result;
         };
-        if ('then' in result) return result.then(success);
+        if (thenAble(result)) return result.then(success);
         return success(result);
       } catch (err) {
         setState.call(this, old, err);

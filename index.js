@@ -32,6 +32,9 @@ export class FSMError extends Error {
         this.cause = cause;
     }
 }
+function thenAble(val) {
+    return typeof val === 'object' && val && 'then' in val;
+}
 const stateDiagram = new Map();
 // const originPromise = Object.getPrototypeOf((async () => { })()).constructor;
 export function ChangeState(from, to, opt = {}) {
@@ -93,7 +96,7 @@ export function ChangeState(from, to, opt = {}) {
                     }
                     return result;
                 };
-                if ('then' in result)
+                if (thenAble(result))
                     return result.then(success);
                 else
                     return success(result);
@@ -152,7 +155,7 @@ export function ActionState(name) {
                     setState.call(this, old);
                     return result;
                 };
-                if ('then' in result)
+                if (thenAble(result))
                     return result.then(success);
                 return success(result);
             }
