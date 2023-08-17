@@ -6,7 +6,6 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 import { FSM, ChangeState } from '../index';
 export class SetTimeout extends FSM {
-    id;
     constructor(name) {
         super(name, "setTimeout");
     }

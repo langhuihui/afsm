@@ -1,11 +1,11 @@
 {
   "name": "afsm",
-  "version": "2.4.3",
+  "version": "2.4.4",
   "description": "automatic finite state machine",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc --watch",
+    "build": "tsc --target es2017",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:serve": "vitepress serve docs"

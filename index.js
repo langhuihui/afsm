@@ -4,14 +4,11 @@ const abortCtrl = Symbol('abortCtrl');
 const cacheResult = Symbol('cacheResult');
 // 中间过渡状态
 export class MiddleState {
-    oldState;
-    newState;
-    action;
-    aborted = false;
     constructor(oldState, newState, action) {
         this.oldState = oldState;
         this.newState = newState;
         this.action = action;
+        this.aborted = false;
     }
     abort(fsm) {
         this.aborted = true;
@@ -22,9 +19,6 @@ export class MiddleState {
     }
 }
 export class FSMError extends Error {
-    state;
-    message;
-    cause;
     constructor(state, message, cause) {
         super(message);
         this.state = state;
@@ -89,10 +83,11 @@ export function ChangeState(from, to, opt = {}) {
             try {
                 const result = origin.apply(this, arg);
                 const success = (result) => {
+                    var _a;
                     fsm[cacheResult] = result;
                     if (!middle.aborted) {
                         setState.call(fsm, to);
-                        opt.success?.call(this, fsm[cacheResult]);
+                        (_a = opt.success) === null || _a === void 0 ? void 0 : _a.call(this, fsm[cacheResult]);
                     }
                     return result;
                 };
@@ -186,8 +181,6 @@ function setState(value, err) {
     this.updateDevTools({ value, old, err: err instanceof Error ? err.message : String(err) });
 }
 class FSM extends EventEmitter {
-    name;
-    groupName;
     get stateDiagram() {
         const protoType = Object.getPrototypeOf(this);
         const stateConfig = stateDiagram.get(protoType) || [];
@@ -236,13 +229,6 @@ class FSM extends EventEmitter {
         });
         return value;
     }
-    static STATECHANGED = 'stateChanged';
-    static UPDATEAFSM = 'updateAFSM';
-    static INIT = "[*]"; //初始状态
-    static ON = "on";
-    static OFF = "off";
-    static instances = new Map();
-    static instances2 = new WeakMap();
     static get(context) {
         let fsm;
         if (typeof context === 'string') {
@@ -260,15 +246,14 @@ class FSM extends EventEmitter {
         return fsm;
     }
     static getState(context) {
-        return FSM.get(context)?.state;
+        var _a;
+        return (_a = FSM.get(context)) === null || _a === void 0 ? void 0 : _a.state;
     }
-    _state = FSM.INIT;
-    [cacheResult];
-    [abortCtrl];
     constructor(name, groupName, prototype) {
         super();
         this.name = name;
         this.groupName = groupName;
+        this._state = FSM.INIT;
         if (!name)
             name = Date.now().toString(36);
         if (!prototype)
@@ -285,7 +270,7 @@ class FSM extends EventEmitter {
         this.updateDevTools({ diagram: this.stateDiagram });
     }
     updateDevTools(payload = {}) {
-        sendDevTools(FSM.UPDATEAFSM, { name: this.name, group: this.groupName, ...payload });
+        sendDevTools(FSM.UPDATEAFSM, Object.assign({ name: this.name, group: this.groupName }, payload));
     }
     get state() {
         return this._state;
@@ -294,5 +279,12 @@ class FSM extends EventEmitter {
         setState.call(this, value);
     }
 }
+FSM.STATECHANGED = 'stateChanged';
+FSM.UPDATEAFSM = 'updateAFSM';
+FSM.INIT = "[*]"; //初始状态
+FSM.ON = "on";
+FSM.OFF = "off";
+FSM.instances = new Map();
+FSM.instances2 = new WeakMap();
 export { FSM };
 //# sourceMappingURL=index.js.map
