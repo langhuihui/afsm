@@ -87,24 +87,27 @@ export function ChangeState(from: string | string[], to: string, opt: ChangeOpti
       const old = fsm.state;
       const middle = new MiddleState(old, to, action);
       setState.call(fsm, middle);
-      try {
-        const result = origin.apply(this, arg);
-        const success = (result: any) => {
-          fsm[cacheResult] = result;
-          if (!middle.aborted) {
-            setState.call(fsm, to);
-            opt.success?.call(this, fsm[cacheResult]);
-          }
-          return result;
-        };
-        if (thenAble(result)) return result.then(success);
-        else return success(result);
-      } catch (err) {
+      const success = (result: any) => {
+        fsm[cacheResult] = result;
+        if (!middle.aborted) {
+          setState.call(fsm, to);
+          opt.success?.call(this, fsm[cacheResult]);
+        }
+        return result;
+      };
+      const failed = (err: unknown) => {
         const msg = err instanceof Error ? err.message : String(err);
         setState.call(fsm, old, err);
         if (opt.fail) opt.fail.call(this, new FSMError(fsm._state, `action '${action}' failed :${msg}`, err instanceof Error ? err : new Error(msg)));
         else if (opt.ignoreError) return err;
         else throw err;
+      };
+      try {
+        const result = origin.apply(this, arg);
+        if (thenAble(result)) return result.then(success).catch(failed);
+        else return success(result);
+      } catch (err) {
+        failed(err);
       }
     };
   };

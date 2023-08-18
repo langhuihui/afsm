@@ -3,8 +3,8 @@ export interface IFSM extends FSM {
 }
 declare const abortCtrl: unique symbol;
 declare const cacheResult: unique symbol;
-export type State = string | MiddleState;
-type contextType = string | object;
+export declare type State = string | MiddleState;
+declare type contextType = string | object;
 export interface ChangeOption {
     ignoreError?: boolean;
     action?: string;

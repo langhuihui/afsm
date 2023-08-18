@@ -80,23 +80,16 @@ export function ChangeState(from, to, opt = {}) {
             const old = fsm.state;
             const middle = new MiddleState(old, to, action);
             setState.call(fsm, middle);
-            try {
-                const result = origin.apply(this, arg);
-                const success = (result) => {
-                    var _a;
-                    fsm[cacheResult] = result;
-                    if (!middle.aborted) {
-                        setState.call(fsm, to);
-                        (_a = opt.success) === null || _a === void 0 ? void 0 : _a.call(this, fsm[cacheResult]);
-                    }
-                    return result;
-                };
-                if (thenAble(result))
-                    return result.then(success);
-                else
-                    return success(result);
-            }
-            catch (err) {
+            const success = (result) => {
+                var _a;
+                fsm[cacheResult] = result;
+                if (!middle.aborted) {
+                    setState.call(fsm, to);
+                    (_a = opt.success) === null || _a === void 0 ? void 0 : _a.call(this, fsm[cacheResult]);
+                }
+                return result;
+            };
+            const failed = (err) => {
                 const msg = err instanceof Error ? err.message : String(err);
                 setState.call(fsm, old, err);
                 if (opt.fail)
@@ -105,6 +98,16 @@ export function ChangeState(from, to, opt = {}) {
                     return err;
                 else
                     throw err;
+            };
+            try {
+                const result = origin.apply(this, arg);
+                if (thenAble(result))
+                    return result.then(success).catch(failed);
+                else
+                    return success(result);
+            }
+            catch (err) {
+                failed(err);
             }
         };
     };
@@ -180,7 +183,27 @@ function setState(value, err) {
     this.emit(FSM.STATECHANGED, value, old, err);
     this.updateDevTools({ value, old, err: err instanceof Error ? err.message : String(err) });
 }
-class FSM extends EventEmitter {
+export class FSM extends EventEmitter {
+    constructor(name, groupName, prototype) {
+        super();
+        this.name = name;
+        this.groupName = groupName;
+        this._state = FSM.INIT;
+        if (!name)
+            name = Date.now().toString(36);
+        if (!prototype)
+            prototype = Object.getPrototypeOf(this);
+        else
+            Object.setPrototypeOf(this, prototype);
+        if (!groupName)
+            this.groupName = this.constructor.name;
+        const names = prototype[instance];
+        if (!names)
+            prototype[instance] = { name: this.name, count: 0 };
+        else
+            this.name = names.name + "-" + names.count++;
+        this.updateDevTools({ diagram: this.stateDiagram });
+    }
     get stateDiagram() {
         const protoType = Object.getPrototypeOf(this);
         const stateConfig = stateDiagram.get(protoType) || [];
@@ -249,26 +272,6 @@ class FSM extends EventEmitter {
         var _a;
         return (_a = FSM.get(context)) === null || _a === void 0 ? void 0 : _a.state;
     }
-    constructor(name, groupName, prototype) {
-        super();
-        this.name = name;
-        this.groupName = groupName;
-        this._state = FSM.INIT;
-        if (!name)
-            name = Date.now().toString(36);
-        if (!prototype)
-            prototype = Object.getPrototypeOf(this);
-        else
-            Object.setPrototypeOf(this, prototype);
-        if (!groupName)
-            this.groupName = this.constructor.name;
-        const names = prototype[instance];
-        if (!names)
-            prototype[instance] = { name: this.name, count: 0 };
-        else
-            this.name = names.name + "-" + names.count++;
-        this.updateDevTools({ diagram: this.stateDiagram });
-    }
     updateDevTools(payload = {}) {
         sendDevTools(FSM.UPDATEAFSM, Object.assign({ name: this.name, group: this.groupName }, payload));
     }
@@ -286,5 +289,4 @@ FSM.ON = "on";
 FSM.OFF = "off";
 FSM.instances = new Map();
 FSM.instances2 = new WeakMap();
-export { FSM };
 //# sourceMappingURL=index.js.map
