@@ -20,6 +20,7 @@ export interface ChangeOption {
    * 用于中断状态机，当状态机处于中间状态时，调用此函数，会中断状态机。
    */
   abortAction?: string;
+  sync?: boolean; //同步执行
 }
 
 // 中间过渡状态
@@ -60,7 +61,7 @@ export function ChangeState(from: string | string[], to: string, opt: ChangeOpti
         // @ts-ignore
         fsm = FSM.get(typeof opt.context === 'function' ? opt.context.call(this, ...arg) : opt.context);
       }
-      if (fsm.state === to) return fsm[cacheResult];
+      if (fsm.state === to) return opt.sync ? fsm[cacheResult] : Promise.resolve(fsm[cacheResult]);
       else if (fsm.state instanceof MiddleState) {
         if (fsm.state.action == opt.abortAction) {
           fsm.state.abort(fsm);
@@ -71,18 +72,26 @@ export function ChangeState(from: string | string[], to: string, opt: ChangeOpti
         if (from.length == 0) {
           if (fsm.state instanceof MiddleState) fsm.state.abort(fsm);
         } else if ((typeof fsm.state != "string" || !from.includes(fsm.state))) {
-          err = new FSMError(fsm._state, `${fsm.name} ${action} to ${to} failed: current state ${fsm._state} not in from config`);
+          err = new FSMError(fsm._state, `${fsm.name} ${action} to ${to} failed: current state ${fsm._state} not from ${from.join('|')}`);
         }
       } else {
         if (from !== fsm.state) {
           err = new FSMError(fsm._state, `${fsm.name} ${action} to ${to} failed: current state ${fsm._state} not from ${from}`);
         }
       }
-      if (err) {
+
+      const returnErr = (err: FSMError) => {
         if (opt.fail) opt.fail.call(this, err);
-        else if (opt.ignoreError) return err;
-        else throw err;
-      }
+        if (opt.sync) {
+          if (opt.ignoreError) return err;
+          throw err;
+        } else {
+          if (opt.ignoreError) return Promise.resolve(err);
+          return Promise.reject(err);
+        }
+      };
+
+      if (err) return returnErr(err);
 
       const old = fsm.state;
       const middle = new MiddleState(old, to, action);
@@ -98,16 +107,14 @@ export function ChangeState(from: string | string[], to: string, opt: ChangeOpti
       const failed = (err: unknown) => {
         const msg = err instanceof Error ? err.message : String(err);
         setState.call(fsm, old, err);
-        if (opt.fail) opt.fail.call(this, new FSMError(fsm._state, `action '${action}' failed :${msg}`, err instanceof Error ? err : new Error(msg)));
-        else if (opt.ignoreError) return err;
-        else throw err;
+        return returnErr(new FSMError(fsm._state, `action '${action}' failed :${msg}`, err instanceof Error ? err : new Error(msg)));
       };
       try {
         const result = origin.apply(this, arg);
         if (thenAble(result)) return result.then(success).catch(failed);
-        else return success(result);
+        else return opt.sync ? success(result) : Promise.resolve(success(result));
       } catch (err) {
-        failed(err);
+        return failed(err);
       }
     };
   };

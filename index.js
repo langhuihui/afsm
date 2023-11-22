@@ -48,7 +48,7 @@ export function ChangeState(from, to, opt = {}) {
                 fsm = FSM.get(typeof opt.context === 'function' ? opt.context.call(this, ...arg) : opt.context);
             }
             if (fsm.state === to)
-                return fsm[cacheResult];
+                return opt.sync ? fsm[cacheResult] : Promise.resolve(fsm[cacheResult]);
             else if (fsm.state instanceof MiddleState) {
                 if (fsm.state.action == opt.abortAction) {
                     fsm.state.abort(fsm);
@@ -61,7 +61,7 @@ export function ChangeState(from, to, opt = {}) {
                         fsm.state.abort(fsm);
                 }
                 else if ((typeof fsm.state != "string" || !from.includes(fsm.state))) {
-                    err = new FSMError(fsm._state, `${fsm.name} ${action} to ${to} failed: current state ${fsm._state} not in from config`);
+                    err = new FSMError(fsm._state, `${fsm.name} ${action} to ${to} failed: current state ${fsm._state} not from ${from.join('|')}`);
                 }
             }
             else {
@@ -69,14 +69,22 @@ export function ChangeState(from, to, opt = {}) {
                     err = new FSMError(fsm._state, `${fsm.name} ${action} to ${to} failed: current state ${fsm._state} not from ${from}`);
                 }
             }
-            if (err) {
+            const returnErr = (err) => {
                 if (opt.fail)
                     opt.fail.call(this, err);
-                else if (opt.ignoreError)
-                    return err;
-                else
+                if (opt.sync) {
+                    if (opt.ignoreError)
+                        return err;
                     throw err;
-            }
+                }
+                else {
+                    if (opt.ignoreError)
+                        return Promise.resolve(err);
+                    return Promise.reject(err);
+                }
+            };
+            if (err)
+                return returnErr(err);
             const old = fsm.state;
             const middle = new MiddleState(old, to, action);
             setState.call(fsm, middle);
@@ -92,22 +100,17 @@ export function ChangeState(from, to, opt = {}) {
             const failed = (err) => {
                 const msg = err instanceof Error ? err.message : String(err);
                 setState.call(fsm, old, err);
-                if (opt.fail)
-                    opt.fail.call(this, new FSMError(fsm._state, `action '${action}' failed :${msg}`, err instanceof Error ? err : new Error(msg)));
-                else if (opt.ignoreError)
-                    return err;
-                else
-                    throw err;
+                return returnErr(new FSMError(fsm._state, `action '${action}' failed :${msg}`, err instanceof Error ? err : new Error(msg)));
             };
             try {
                 const result = origin.apply(this, arg);
                 if (thenAble(result))
                     return result.then(success).catch(failed);
                 else
-                    return success(result);
+                    return opt.sync ? success(result) : Promise.resolve(success(result));
             }
             catch (err) {
-                failed(err);
+                return failed(err);
             }
         };
     };

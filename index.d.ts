@@ -18,6 +18,7 @@ export interface ChangeOption {
      * 用于中断状态机，当状态机处于中间状态时，调用此函数，会中断状态机。
      */
     abortAction?: string;
+    sync?: boolean;
 }
 export declare class MiddleState {
     oldState: State;
