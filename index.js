@@ -98,9 +98,9 @@ export function ChangeState(from, to, opt = {}) {
                 return result;
             };
             const failed = (err) => {
-                const msg = err instanceof Error ? err.message : String(err);
+                // const msg = err instanceof Error ? err.message : String(err);
                 setState.call(fsm, old, err);
-                return returnErr(new FSMError(fsm._state, `action '${action}' failed :${msg}`, err instanceof Error ? err : new Error(msg)));
+                return returnErr(err);
             };
             try {
                 const result = origin.apply(this, arg);

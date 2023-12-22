@@ -11,7 +11,7 @@ export interface ChangeOption {
   ignoreError?: boolean;
   action?: string;
   success?: (result: any) => any;
-  fail?: (err: FSMError) => any;
+  fail?: (err: unknown) => any;
   /**
    * 用于组合一组状态，当一个类里面有多个状态机时，可以用此属性来区分
    */
@@ -80,7 +80,7 @@ export function ChangeState(from: string | string[], to: string, opt: ChangeOpti
         }
       }
 
-      const returnErr = (err: FSMError) => {
+      const returnErr = (err: unknown) => {
         if (opt.fail) opt.fail.call(this, err);
         if (opt.sync) {
           if (opt.ignoreError) return err;
@@ -105,9 +105,9 @@ export function ChangeState(from: string | string[], to: string, opt: ChangeOpti
         return result;
       };
       const failed = (err: unknown) => {
-        const msg = err instanceof Error ? err.message : String(err);
+        // const msg = err instanceof Error ? err.message : String(err);
         setState.call(fsm, old, err);
-        return returnErr(new FSMError(fsm._state, `action '${action}' failed :${msg}`, err instanceof Error ? err : new Error(msg)));
+        return returnErr(err);
       };
       try {
         const result = origin.apply(this, arg);

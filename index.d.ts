@@ -9,7 +9,7 @@ export interface ChangeOption {
     ignoreError?: boolean;
     action?: string;
     success?: (result: any) => any;
-    fail?: (err: FSMError) => any;
+    fail?: (err: unknown) => any;
     /**
      * 用于组合一组状态，当一个类里面有多个状态机时，可以用此属性来区分
      */
