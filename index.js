@@ -19,6 +19,13 @@ export class MiddleState {
     }
 }
 export class FSMError extends Error {
+    /*************  ✨ Codeium Command ⭐  *************/
+    /**
+     * Create a new instance of FSMError.
+     * @param state current state.
+     * @param message error message.
+     * @param cause original error.
+  /******  625fa23f-3ee1-42ac-94bd-4f6ffd4578ff  *******/
     constructor(state, message, cause) {
         super(message);
         this.state = state;
@@ -98,7 +105,6 @@ export function ChangeState(from, to, opt = {}) {
                 return result;
             };
             const failed = (err) => {
-                // const msg = err instanceof Error ? err.message : String(err);
                 setState.call(fsm, old, err);
                 return returnErr(err);
             };
@@ -110,7 +116,7 @@ export function ChangeState(from, to, opt = {}) {
                     return opt.sync ? success(result) : Promise.resolve(success(result));
             }
             catch (err) {
-                return failed(err);
+                return failed(new FSMError(fsm._state, `${fsm.name} ${action} from ${from} to ${to} failed: ${err}`, err instanceof Error ? err : new Error(String(err))));
             }
         };
     };

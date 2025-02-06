@@ -9,7 +9,7 @@ export interface ChangeOption {
     ignoreError?: boolean;
     action?: string;
     success?: (result: any) => any;
-    fail?: (err: unknown) => any;
+    fail?: (err: FSMError) => any;
     /**
      * 用于组合一组状态，当一个类里面有多个状态机时，可以用此属性来区分
      */
@@ -33,6 +33,13 @@ export declare class FSMError extends Error {
     state: State;
     message: string;
     cause?: Error | undefined;
+    /*************  ✨ Codeium Command ⭐  *************/
+    /**
+     * Create a new instance of FSMError.
+     * @param state current state.
+     * @param message error message.
+     * @param cause original error.
+  /******  625fa23f-3ee1-42ac-94bd-4f6ffd4578ff  *******/
     constructor(state: State, message: string, cause?: Error | undefined);
 }
 export declare function ChangeState(from: string | string[], to: string, opt?: ChangeOption): (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => void;
