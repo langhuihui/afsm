@@ -1,0 +1,9 @@
+---
+// Override of Starlight's default ContentPanel.astro.
+// Keeps the .sl-container wrapper so content respects --sl-content-width
+// (otherwise every page's text stretches across the whole main column).
+// .afsm-content-panel customizes padding/borders in dark-tech.css.
+---
+<div class="content-panel afsm-content-panel">
+  <div class="sl-container"><slot /></div>
+</div>

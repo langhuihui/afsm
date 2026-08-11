@@ -1,0 +1,482 @@
+/* AFSM dark-tech theme overrides for Starlight.
+   Slimmed down: theme vars + Starlight shell overrides + static home/hero
+   styling only. Playground island components are styled with Tailwind
+   (see global.css), so all afsm-pg, afsm-btn, afsm-tl, afsm-console
+   component CSS has been removed from here.
+
+   Fonts: Inter (body) + JetBrains Mono (code) via Google Fonts <link> in
+   PageFrame head. */
+
+:root {
+  /* Base palette — deep space dark with neon cyan accent */
+  --afsm-bg: #0a0a0f;
+  --afsm-bg-nav: #0f0f17;
+  --afsm-bg-panel: #12121c;
+  --afsm-bg-elevated: #181826;
+  --afsm-border: rgba(0, 240, 255, 0.12);
+  --afsm-border-strong: rgba(0, 240, 255, 0.25);
+
+  /* Accent: neon cyan + magenta secondary */
+  --afsm-accent: #00f0ff;
+  --afsm-accent-2: #ff00ea;
+  --afsm-accent-soft: rgba(0, 240, 255, 0.1);
+
+  /* Status colors */
+  --afsm-success: #18a058;
+  --afsm-error: #d03050;
+  --afsm-info: #2080f0;
+  --afsm-warn: #e0a800;
+
+  /* Typography */
+  --afsm-font: 'Inter', system-ui, -apple-system, sans-serif;
+  --afsm-font-mono: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+
+  /* Glow */
+  --afsm-glow: 0 0 24px rgba(0, 240, 255, 0.35);
+  --afsm-glow-strong: 0 0 40px rgba(0, 240, 255, 0.5);
+}
+
+/* Override Starlight's CSS variables to dark-tech palette */
+:root,
+:root[data-theme='light'],
+:root[data-theme='dark'] {
+  --sl-color-bg: var(--afsm-bg);
+  --sl-color-bg-nav: var(--afsm-bg-nav);
+  --sl-color-bg-sidebar: var(--afsm-bg-nav);
+  --sl-color-bg-toolbar: var(--afsm-bg-panel);
+  --sl-color-bg-inset: var(--afsm-bg-panel);
+  --sl-color-bg-invert: #ffffff;
+  --sl-color-bg-1: var(--afsm-bg-elevated);
+  --sl-color-bg-2: var(--afsm-bg-panel);
+  --sl-color-bg-3: var(--afsm-bg-nav);
+
+  --sl-color-text: #e4e4ef;
+  --sl-color-text-1: #e4e4ef;
+  --sl-color-text-2: #a4a4b8;
+  --sl-color-text-3: #6c6c80;
+  --sl-color-text-invert: #0a0a0f;
+
+  --sl-color-accent: var(--afsm-accent);
+  --sl-color-accent-low: rgba(0, 240, 255, 0.12);
+  --sl-color-accent-high: #5cf5ff;
+  --sl-color-accent-press: #00c8d6;
+
+  --sl-color-white: #ffffff;
+  --sl-color-gray-1: #e4e4ef;
+  --sl-color-gray-2: #a4a4b8;
+  --sl-color-gray-3: #6c6c80;
+  --sl-color-gray-4: #4a4a5c;
+  --sl-color-gray-5: #2a2a3a;
+  --sl-color-gray-6: #1a1a26;
+
+  --sl-color-hairline: var(--afsm-border);
+  --sl-color-hairline-shade: var(--afsm-border);
+
+  --sl-font: var(--afsm-font);
+  --sl-font-mono: var(--afsm-font-mono);
+
+  --sl-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--afsm-border);
+  --sl-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--afsm-border);
+  --sl-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--afsm-border-strong);
+
+  --sl-radius: 8px;
+}
+
+/* Force dark theme by default */
+html {
+  color-scheme: dark;
+  background: var(--afsm-bg);
+}
+
+/* Grid background + radial glow for the body */
+body {
+  background-color: var(--afsm-bg);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 240, 255, 0.08), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 10%, rgba(255, 0, 234, 0.05), transparent),
+    linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+  background-attachment: fixed;
+  color: var(--sl-color-text);
+  font-family: var(--sl-font);
+  min-height: 100vh;
+}
+
+/* Header: glass blur + neon border */
+header[role='banner'],
+.site-header,
+.starlight-header {
+  background: rgba(15, 15, 23, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--afsm-border);
+}
+
+/* Logo: subtle glow */
+.site-logo img,
+.starlight-logo {
+  filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.4));
+}
+
+/* Headings: gradient text on h1 */
+h1 {
+  background: linear-gradient(135deg, #ffffff 0%, var(--afsm-accent) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.02em;
+}
+
+/* Links: neon underline */
+a {
+  color: var(--afsm-accent);
+  text-decoration: none;
+  transition: color 0.15s, text-shadow 0.15s;
+}
+a:hover {
+  color: var(--afsm-accent-high);
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+}
+
+/* Code blocks: dark elevated bg + neon border.
+   Scoped to Starlight markdown content EXCLUDING `not-content` subtrees so the
+   playground islands (which style their own <pre>) are left untouched. */
+pre,
+.starlight-aside,
+code {
+  font-family: var(--sl-font-mono);
+}
+.sl-markdown-content pre:not(:where(.not-content *)) {
+  background: var(--afsm-bg-panel) !important;
+  border: 1px solid var(--afsm-border);
+  border-radius: var(--sl-radius);
+  box-shadow: inset 0 0 24px rgba(0, 240, 255, 0.03);
+}
+.sl-markdown-content pre:not(:where(.not-content *)) code {
+  background: transparent;
+  color: #e4e4ef;
+}
+
+/* Inline code — scoped to markdown content (excludes islands) */
+.sl-markdown-content :not(pre) > code:not(:where(.not-content *)) {
+  background: var(--afsm-accent-soft);
+  border: 1px solid var(--afsm-border);
+  color: var(--afsm-accent);
+  padding: 0.1em 0.4em;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+/* Sidebar: subtle grid */
+nav[aria-label='Primary'],
+.sidebar {
+  background: var(--afsm-bg-nav);
+  border-right: 1px solid var(--afsm-border);
+}
+
+/* Sidebar group labels — uppercase, neon */
+.sidebar-group-label,
+.starlight-sidebar-group-label {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 11px;
+  color: var(--afsm-accent);
+  font-weight: 600;
+}
+
+/* Active sidebar link */
+a[aria-current='page'],
+.sidebar-link.active {
+  background: var(--afsm-accent-soft);
+  color: var(--afsm-accent);
+  border-left: 2px solid var(--afsm-accent);
+  box-shadow: inset 0 0 12px rgba(0, 240, 255, 0.1);
+}
+
+/* Cards / panels: glass effect */
+.starlight-card,
+.card,
+.panel {
+  background: rgba(18, 18, 28, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--afsm-border);
+  border-radius: var(--sl-radius);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.starlight-card:hover,
+.card:hover {
+  border-color: var(--afsm-border-strong);
+  box-shadow: var(--afsm-glow);
+}
+
+/* Aside (callouts): neon-tinted */
+.starlight-aside,
+aside {
+  background: rgba(0, 240, 255, 0.04);
+  border: 1px solid var(--afsm-border);
+  border-left: 3px solid var(--afsm-accent);
+  border-radius: var(--sl-radius);
+}
+.starlight-aside--warn,
+aside[data-type='caution'] {
+  border-left-color: var(--afsm-warn);
+  background: rgba(224, 168, 0, 0.04);
+}
+.starlight-aside--danger,
+aside[data-type='danger'] {
+  border-left-color: var(--afsm-error);
+  background: rgba(208, 48, 80, 0.04);
+}
+
+/* Scrollbar — neon */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--afsm-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--afsm-border-strong);
+  border-radius: 4px;
+  border: 2px solid var(--afsm-bg);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--afsm-accent);
+}
+
+/* Selection */
+::selection {
+  background: var(--afsm-accent);
+  color: #0a0a0f;
+}
+
+/* Footer */
+footer,
+.site-footer {
+  border-top: 1px solid var(--afsm-border);
+  background: var(--afsm-bg-nav);
+  color: var(--sl-color-gray-3);
+  font-size: 13px;
+}
+
+/* Playground container — full-width column available, but cap the page so the
+   Monaco + preview panes don't stretch edge-to-edge on wide screens. */
+.playground-page main {
+  max-width: min(100%, 75rem) !important;
+  margin-inline: auto !important;
+  padding: 0 1.25rem !important;
+}
+/* The playground page must not inherit the 45rem reading width from
+   .sl-container — the FullPlayground needs the full 75rem column. */
+.playground-page .sl-container {
+  max-width: none !important;
+  margin-inline: 0 !important;
+}
+
+/* Header dropdown spacing (prevent ThemeSelect + LanguageSelect arrow overlap) */
+header .sl-anchor-badge + .sl-anchor-badge,
+header [class*='select'] {
+  margin-inline-start: 32px;
+}
+
+/* Override ContentPanel: keep the padding/visual look but constrain content
+   to the reading width (Starlight's .sl-container normally does this). */
+.afsm-content-panel {
+  padding: 1.5rem var(--sl-content-pad-x);
+}
+.afsm-content-panel + .afsm-content-panel {
+  border-top: 1px solid var(--afsm-border);
+}
+.afsm-content-panel > :first-child {
+  margin-top: 0;
+}
+.afsm-content-panel .sl-container {
+  max-width: var(--sl-content-width);
+  margin-inline: auto;
+}
+
+/* ===== Home page (static MDX, wrapped in not-content) ===== */
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  /* !important beats Starlight's unlayered content margin rule. */
+  margin: 32px 0 !important;
+}
+.feature-card {
+  background: rgba(18, 18, 28, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--afsm-border);
+  border-radius: 8px;
+  padding: 20px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+}
+.feature-card:hover {
+  border-color: var(--afsm-border-strong);
+  box-shadow: var(--afsm-glow);
+}
+.feature-card h3 {
+  font-size: 16px;
+  margin: 0 0 8px;
+  color: var(--afsm-accent);
+}
+.feature-card p {
+  font-size: 14px;
+  color: var(--sl-color-text-2);
+  margin: 0;
+  line-height: 1.5;
+}
+/* .feature-icon styles come from the Hero/home section below */
+
+/* ===== Hero (must be global — Hero.astro scoped style doesn't ship when used in MDX) ===== */
+.hero {
+  position: relative;
+  padding: 72px 24px 48px;
+  text-align: center;
+  overflow: hidden;
+  border-bottom: 1px solid var(--afsm-border);
+}
+.hero-glow {
+  position: absolute;
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+  filter: blur(40px);
+}
+.hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.hero-logo img {
+  filter: drop-shadow(0 0 24px rgba(0, 240, 255, 0.6));
+  margin-bottom: 16px;
+}
+.hero-title {
+  font-size: clamp(48px, 8vw, 88px);
+  font-weight: 800;
+  margin: 0 0 12px;
+  background: linear-gradient(135deg, #ffffff 0%, #00f0ff 50%, #ff00ea 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.hero-tagline {
+  font-size: clamp(16px, 2.5vw, 22px);
+  color: var(--sl-color-text-2);
+  margin: 0 0 32px;
+  font-weight: 400;
+}
+.hero-cta {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+}
+/* Hero buttons — explicit so the global `a:hover` rule never overrides the
+   dark-on-accent text. */
+a.hero-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 24px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  border: 1px solid;
+  transition: all 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: var(--afsm-font-mono);
+  line-height: 1.2;
+  vertical-align: middle;
+  min-width: 110px;
+  min-height: 42px;
+}
+a.hero-btn--primary {
+  background: var(--afsm-accent) !important;
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+  border-color: var(--afsm-accent);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
+}
+a.hero-btn--primary:hover {
+  background: #5cf5ff !important;
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+  border-color: #5cf5ff;
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.5);
+}
+a.hero-btn--alt {
+  background: transparent !important;
+  color: var(--afsm-accent) !important;
+  border-color: var(--afsm-border-strong);
+}
+a.hero-btn--alt:hover {
+  background: var(--afsm-accent-soft) !important;
+  color: var(--afsm-accent) !important;
+  border-color: var(--afsm-accent);
+  text-shadow: none;
+}
+.hero-meta {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.hero-badge {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: var(--afsm-accent-soft);
+  border: 1px solid var(--afsm-border);
+  color: var(--afsm-accent);
+  font-family: var(--afsm-font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ===== Home feature icon — unify 01-04 icon height for alignment ===== */
+.feature-icon {
+  display: block;
+  height: 64px;
+  line-height: 64px;
+  font-size: 48px;
+  font-weight: 700;
+  font-family: var(--afsm-font-mono);
+  letter-spacing: -0.02em;
+  color: var(--afsm-accent);
+  background: linear-gradient(135deg, var(--afsm-accent) 0%, var(--afsm-accent-2) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0 0 16px;
+  vertical-align: bottom;
+}
+
+/* ===== Token colors used by CodeBlock's highlight() (injected via innerHTML) ===== */
+.afsm-tok-keyword { color: #c792ea; }
+.afsm-tok-string { color: #c3e88d; }
+.afsm-tok-number { color: #f78c6c; }
+.afsm-tok-comment { color: #546e7a; font-style: italic; }
+.afsm-tok-decorator { color: #ffcb6b; }
+.afsm-tok-function { color: #82aaff; }
+.afsm-tok-type { color: #ffcb6b; }
+

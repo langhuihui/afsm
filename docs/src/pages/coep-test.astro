@@ -1,0 +1,27 @@
+---
+---
+<html>
+<head><title>coep test</title></head>
+<body>
+<script>
+  function testWorker(name, url, opts) {
+    return new Promise((resolve) => {
+      try {
+        const w = new Worker(url, opts);
+        const t = setTimeout(() => { try { w.terminate(); } catch {} resolve(name + ': timeout'); }, 6000);
+        w.onmessage = (e) => { clearTimeout(t); resolve(name + ': ' + e.data); };
+        w.onerror = (e) => { clearTimeout(t); let m='err'; try{m+='|'+e.message}catch{}; try{m+='|'+e.filename}catch{}; resolve(name + ': ' + m); };
+      } catch (e) {
+        resolve(name + ': throw ' + (e && e.message || e));
+      }
+    });
+  }
+  (async () => {
+    const mod = await testWorker('module', '/__tiny-worker.js', { type: 'module' });
+    const classic = await testWorker('classic', '/__tiny-worker.js', undefined);
+    const blobMod = await testWorker('blob-mod', URL.createObjectURL(new Blob(['self.postMessage("blob-ok")'], { type: 'text/javascript' })), { type: 'module' });
+    document.title = mod + ' || ' + classic + ' || ' + blobMod;
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+---
+// Splash pages (our home page) render a custom <Hero> with the big AFSM title
+// inside the MDX body — Starlight's default PageTitle would add a duplicate H1.
+const isSplashPage = Astro.props.entry.data.template === 'splash';
+---
+
+{!isSplashPage && <h1 id="_top">{Astro.props.entry.data.title}</h1>}

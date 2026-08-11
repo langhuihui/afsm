@@ -1,0 +1,172 @@
+/* AFSM docs — Tailwind CSS v4 entry.
+   Loaded via Starlight `customCss` (after dark-tech.css).
+   Starlight 0.30.6's own CSS is UNLAYERED, so it beats every Tailwind layer.
+   Island components compensate by:
+   - wrapping their root in `not-content` (exempts them from .sl-markdown-content rules)
+   - using `!`-suffixed margin/font utilities where Starlight's unlayered
+     `* { margin: 0 }` / `input,button,select { font: inherit }` would win.
+*/
+@import 'tailwindcss';
+
+/* Don't let Tailwind's auto content-scan walk the build/dev caches. */
+@source not '../dist';
+@source not '../.astro';
+
+@theme {
+  /* Palette — single source for Tailwind utilities. dark-tech.css keeps its
+     own literal --afsm-* copies so Starlight's var mapping is decoupled from
+     Tailwind's tree-shaking. */
+  --color-afsm-bg: #0a0a0f;
+  --color-afsm-nav: #0f0f17;
+  --color-afsm-panel: #12121c;
+  --color-afsm-elevated: #181826;
+  --color-afsm-accent: #00f0ff;
+  --color-afsm-magenta: #ff00ea;
+  --color-afsm-line: rgba(0, 240, 255, 0.12);
+  --color-afsm-line-strong: rgba(0, 240, 255, 0.25);
+  --color-afsm-success: #18a058;
+  --color-afsm-error: #d03050;
+  --color-afsm-info: #2080f0;
+  --color-afsm-warn: #e0a800;
+  --color-afsm-text: #e4e4ef;
+  --color-afsm-text-dim: #a4a4b8;
+  --color-afsm-text-faint: #6c6c80;
+
+  --font-afsm: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-afsm-mono: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+
+  --shadow-afsm-glow: 0 0 24px rgba(0, 240, 255, 0.35);
+  --shadow-afsm-glow-strong: 0 0 40px rgba(0, 240, 255, 0.5);
+
+  --animate-afsm-pulse: afsm-pulse 1s ease-in-out infinite;
+  --animate-afsm-spin: afsm-spin 0.8s linear infinite;
+
+  @keyframes afsm-pulse {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+      box-shadow: 0 0 0 0 var(--color-afsm-accent);
+    }
+    50% {
+      opacity: 0.6;
+      transform: scale(0.85);
+      box-shadow: 0 0 8px 2px var(--color-afsm-accent);
+    }
+  }
+  @keyframes afsm-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
+
+/* ===== Shared island building blocks (custom utilities) ===== */
+
+/* Playground card container (was .afsm-pg) */
+@utility afsm-panel {
+  border: 1px solid var(--color-afsm-line);
+  border-radius: 10px;
+  background: var(--color-afsm-panel);
+  box-shadow:
+    0 0 0 1px var(--color-afsm-line),
+    0 8px 32px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+/* Uppercase mono section label (was .afsm-pg-section) */
+@utility afsm-section-label {
+  font-family: var(--font-afsm-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-afsm-accent);
+  font-weight: 600;
+  /* !important beats Starlight's unlayered `* { margin: 0 }`. */
+  margin: 0 0 8px !important;
+}
+
+/* Base playground button (was .afsm-btn). font-family needs !important to
+   beat Starlight's unlayered `input,button,textarea,select { font: inherit }`. */
+@utility afsm-btn {
+  font-family: var(--font-afsm-mono) !important;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  height: 32px;
+  min-width: 72px;
+  padding: 6px 14px;
+  border: 1px solid var(--color-afsm-line);
+  border-radius: 6px;
+  background: var(--color-afsm-panel);
+  color: var(--color-afsm-accent);
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    background: rgba(0, 240, 255, 0.1);
+    border-color: var(--color-afsm-line-strong);
+    box-shadow: var(--shadow-afsm-glow);
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+}
+
+@utility afsm-btn-primary {
+  background: var(--color-afsm-accent);
+  color: #0a0a0f;
+  border-color: var(--color-afsm-accent);
+
+  &:hover {
+    background: #5cf5ff;
+    color: #0a0a0f;
+    border-color: #5cf5ff;
+    box-shadow: var(--shadow-afsm-glow);
+  }
+  &:disabled {
+    background: var(--color-afsm-accent);
+    opacity: 0.5;
+  }
+}
+
+@utility afsm-btn-alt {
+  background: transparent;
+  color: var(--color-afsm-accent);
+  border-color: var(--color-afsm-line-strong);
+
+  &:hover {
+    background: rgba(0, 240, 255, 0.1);
+    border-color: var(--color-afsm-accent);
+    color: var(--color-afsm-accent);
+  }
+}
+
+/* Tiny ghost button (CodeBlock copy button) */
+@utility afsm-btn-tiny {
+  font-family: var(--font-afsm-mono) !important;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  padding: 4px 10px;
+  border: 1px solid var(--color-afsm-line);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-afsm-text-dim);
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: var(--color-afsm-accent);
+    color: var(--color-afsm-accent);
+  }
+}

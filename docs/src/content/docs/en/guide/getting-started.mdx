@@ -1,0 +1,92 @@
+---
+title: "Quick Start"
+---
+import EmbeddedPlayground from '../../../../components/EmbeddedPlayground.tsx';
+
+
+
+## Install
+
+```bash
+npm install afsm
+# or
+pnpm add afsm
+# or
+yarn add afsm
+```
+
+AFSM depends on `eventemitter3` and TypeScript experimental decorators.
+
+## Configure tsconfig
+
+AFSM uses the TC39 stage 2 decorator proposal. Enable it in `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "target": "ES2017"
+  }
+}
+```
+
+> Note: `useDefineForClassFields` must be `false` (or unset), otherwise decorator semantics break.
+
+## Your first state machine
+
+```ts
+import { FSM, ChangeState } from 'afsm'
+
+class MyFSM extends FSM {
+  @ChangeState(FSM.INIT, 'state1')
+  async gotoState1() {}
+
+  @ChangeState('state1', 'state2')
+  async gotoState2() {}
+}
+
+const obj = new MyFSM()
+obj.gotoState2()              // throws: current state [*] not from state1
+await obj.gotoState1()        // state becomes state1
+await obj.gotoState2()        // state becomes state2
+```
+
+## Listen to state changes
+
+```ts
+obj.on(FSM.STATECHANGED, (newState, oldState) => {
+  console.log(`${oldState} → ${newState}`)
+})
+```
+
+You can also listen to specific states or intermediate states:
+
+```ts
+obj.on('state1', () => console.log('reached state1'))
+obj.on('gotoState2ing', () => console.log('going to state2'))
+```
+
+## View the state diagram
+
+Every FSM instance has a `stateDiagram` getter that auto-generates mermaid `stateDiagram-v2` syntax:
+
+```ts
+console.log(obj.stateDiagram.join('\n'))
+// [*] --> gotoState1ing : gotoState1
+// gotoState1ing --> state1 : gotoState1 🟢
+// gotoState1ing --> [*] : gotoState1 🔴
+// ...
+```
+
+## Try it live
+
+Here's the "traffic light" example — tweak the params and hit Run:
+
+<EmbeddedPlayground client:only="react" example="traffic-light" autoRun />
+
+## Next steps
+
+- [Core Concepts](./core-concepts) — FSM class, State, MiddleState in depth
+- [@ChangeState](./change-state) — the transition decorator in detail
+- [Event System](./events) — listening to state changes

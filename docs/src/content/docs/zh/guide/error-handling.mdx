@@ -1,0 +1,123 @@
+---
+title: "错误处理"
+---
+import EmbeddedPlayground from '../../../../components/EmbeddedPlayground.tsx';
+
+
+
+状态迁移失败时，AFSM 会抛出 `FSMError` 并把状态回滚。
+
+## 状态校验失败
+
+如果当前状态不在 `from` 列表中，立即抛错：
+
+```ts
+class Conn extends FSM {
+  @ChangeState(FSM.INIT, 'connected')
+  async connect() {}
+  @ChangeState('connected', 'ready')
+  async prepare() {}
+}
+
+const c = new Conn()
+await c.prepare()  // FSMError: current state [*] not from connected
+```
+
+错误信息形如：
+
+```
+Conn prepare to ready failed: current state [*] not from connected
+```
+
+## 方法执行失败
+
+原方法抛出的错误会被包装成 `FSMError`：
+
+```ts
+@ChangeState('idle', 'done')
+async fetch() {
+  throw new Error('network down')
+}
+```
+
+- 状态从 `idle` → `fetching` → 失败回滚到 `idle`
+- `fetch()` reject 一个 `FSMError`，`cause` 指向原始 `Error`
+
+## FSMError 类型
+
+```ts
+export class FSMError extends Error {
+  state: State        // 发生错误时的状态
+  message: string
+  cause?: Error       // 原始错误（如果有）
+}
+```
+
+```ts
+try {
+  await obj.fetch()
+} catch (e) {
+  if (e instanceof FSMError) {
+    console.log(e.state)     // 'idle'
+    console.log(e.cause)    // Error: network down
+  }
+}
+```
+
+## ignoreError —— 不抛错
+
+```ts
+@ChangeState('idle', 'done', { ignoreError: true })
+async fetch() {
+  throw new Error('oops')
+}
+
+const r = await obj.fetch()
+// r 是 FSMError 实例，而不是 reject
+// 状态仍然回滚到 idle
+```
+
+:::tip
+`ignoreError` 适合「尽力而为」的迁移——比如重试逻辑里，失败就忽略继续重试。
+:::
+
+## fail 回调
+
+```ts
+@ChangeState('idle', 'done', {
+  fail: (err: FSMError) => reportError(err)
+})
+async fetch() {}
+```
+
+`fail` 在错误回滚后、返回给调用者之前调用。`this` 指向实例。
+
+## sync 模式下的错误
+
+开启 `sync: true` 时（见[同步模式](../advanced/sync-mode)），错误会**抛出**而不是 reject：
+
+```ts
+@ChangeState('idle', 'done', { sync: true })
+init() {
+  throw new Error('bad')
+}
+
+try {
+  obj.init()
+} catch (e) {
+  // e 是 FSMError
+}
+```
+
+如果同时开启 `ignoreError`，错误会被**返回**而不是抛出。
+
+## 完整示例
+
+<EmbeddedPlayground client:only="react" example="connection" autoRun />
+
+调整「成功率」滑块，观察失败时的状态回滚与 `FSMError`。
+
+## 下一步
+
+- [可视化状态图](./visualization) — 用 mermaid 看状态机拓扑
+- [API: FSMError](../api/fsm-error) — 完整类型定义

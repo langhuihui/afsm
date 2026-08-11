@@ -1,0 +1,123 @@
+---
+title: "Error Handling"
+---
+import EmbeddedPlayground from '../../../../components/EmbeddedPlayground.tsx';
+
+
+
+When a state transition fails, AFSM throws an `FSMError` and rolls back the state.
+
+## State validation failure
+
+If the current state isn't in `from`, an error is thrown immediately:
+
+```ts
+class Conn extends FSM {
+  @ChangeState(FSM.INIT, 'connected')
+  async connect() {}
+  @ChangeState('connected', 'ready')
+  async prepare() {}
+}
+
+const c = new Conn()
+await c.prepare()  // FSMError: current state [*] not from connected
+```
+
+Error message format:
+
+```
+Conn prepare to ready failed: current state [*] not from connected
+```
+
+## Method execution failure
+
+Errors thrown by the original method are wrapped in `FSMError`:
+
+```ts
+@ChangeState('idle', 'done')
+async fetch() {
+  throw new Error('network down')
+}
+```
+
+- State goes `idle` → `fetching` → rolls back to `idle`
+- `fetch()` rejects with an `FSMError` whose `cause` points to the original `Error`
+
+## FSMError type
+
+```ts
+export class FSMError extends Error {
+  state: State        // state at the time of error
+  message: string
+  cause?: Error       // original error (if any)
+}
+```
+
+```ts
+try {
+  await obj.fetch()
+} catch (e) {
+  if (e instanceof FSMError) {
+    console.log(e.state)     // 'idle'
+    console.log(e.cause)    // Error: network down
+  }
+}
+```
+
+## ignoreError — don't throw
+
+```ts
+@ChangeState('idle', 'done', { ignoreError: true })
+async fetch() {
+  throw new Error('oops')
+}
+
+const r = await obj.fetch()
+// r is an FSMError instance, not a rejection
+// state still rolls back to idle
+```
+
+:::tip
+`ignoreError` is great for "best effort" transitions — e.g. retry logic where you ignore failures and keep retrying.
+:::
+
+## fail callback
+
+```ts
+@ChangeState('idle', 'done', {
+  fail: (err: FSMError) => reportError(err)
+})
+async fetch() {}
+```
+
+`fail` is called after rollback, before returning to the caller. `this` refers to the instance.
+
+## Errors in sync mode
+
+With `sync: true` (see [Sync Mode](../advanced/sync-mode)), errors are **thrown** instead of rejected:
+
+```ts
+@ChangeState('idle', 'done', { sync: true })
+init() {
+  throw new Error('bad')
+}
+
+try {
+  obj.init()
+} catch (e) {
+  // e is an FSMError
+}
+```
+
+With `ignoreError` also on, the error is **returned** instead of thrown.
+
+## Full example
+
+<EmbeddedPlayground client:only="react" example="connection" autoRun />
+
+Lower the "success rate" slider to watch failure rollbacks and `FSMError`.
+
+## Next steps
+
+- [Visualizing the Diagram](./visualization)
+- [API: FSMError](../api/fsm-error)

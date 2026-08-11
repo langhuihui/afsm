@@ -1,0 +1,41 @@
+---
+title: AFSM
+description: Automatic Finite State Machine — 通过装饰器自动管理异步状态机
+template: splash
+---
+
+import EmbeddedPlayground from '../../components/EmbeddedPlayground.tsx';
+import Hero from '../../components/Hero.astro';
+
+<Hero tagline="通过装饰器自动管理异步状态机，一行代码完成状态迁移" ctaText="快速上手" ctaLink="/zh/guide/getting-started" />
+
+<div class="features-grid not-content">
+  <div class="feature-card">
+    <div class="feature-icon">01</div>
+    <h3>装饰器驱动</h3>
+    <p>用 <code>@ChangeState</code> 等装饰器包装异步方法，自动管理状态迁移与中间态。</p>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">02</div>
+    <h3>可视化状态图</h3>
+    <p>自动生成 mermaid <code>stateDiagram-v2</code>，实时观察状态机拓扑与变更。</p>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">03</div>
+    <h3>组合与中断</h3>
+    <p>支持 <code>context</code> 组合多状态机、<code>MiddleState</code> 中断、同步模式与继承。</p>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">04</div>
+    <h3>DevTools 扩展</h3>
+    <p>配套 Chrome 开发者工具面板，实时查看运行中的状态机与历史。</p>
+  </div>
+</div>
+
+## 在线试一试
+
+下面是「红绿灯」示例，会自动运行：
+
+<EmbeddedPlayground client:only="react" example="traffic-light" autoRun />
+
+

@@ -1,0 +1,41 @@
+---
+title: AFSM
+description: Automatic Finite State Machine — decorator-driven async state machines
+template: splash
+---
+
+import EmbeddedPlayground from '../../../components/EmbeddedPlayground.tsx';
+import Hero from '../../../components/Hero.astro';
+
+<Hero tagline="Decorator-driven async state machines — change state in one line" ctaText="Get Started" ctaLink="/en/guide/getting-started" />
+
+<div class="features-grid not-content">
+  <div class="feature-card">
+    <div class="feature-icon">01</div>
+    <h3>Decorator-driven</h3>
+    <p>Wrap async methods with <code>@ChangeState</code> and other decorators to auto-manage transitions and intermediate states.</p>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">02</div>
+    <h3>Visual state diagrams</h3>
+    <p>Auto-generates mermaid <code>stateDiagram-v2</code> so you can observe the topology and transitions live.</p>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">03</div>
+    <h3>Composition & interruption</h3>
+    <p>Compose multiple FSMs via <code>context</code>, abort in-flight <code>MiddleState</code>s, sync mode, and inheritance.</p>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">04</div>
+    <h3>DevTools extension</h3>
+    <p>Companion Chrome DevTools panel to inspect running state machines and their history.</p>
+  </div>
+</div>
+
+## Try it live
+
+Here's the "traffic light" example — it auto-runs:
+
+<EmbeddedPlayground client:only="react" example="traffic-light" autoRun />
+
+

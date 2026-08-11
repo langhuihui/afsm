@@ -1,0 +1,64 @@
+---
+---
+<div class="afsm-search-wrapper">
+  <starlight-search
+    class="astro-uepz5znf"
+    data-translations='{"placeholder":"搜索"}'
+  >
+    <button
+      data-open-modal
+      disabled
+      aria-label="搜索"
+      aria-keyshortcuts="Control+K"
+      class="afsm-search-trigger astro-uepz5znf"
+    >
+      <svg
+        aria-hidden="true"
+        class="astro-uepz5znf astro-h5gym62u"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        style="--sl-icon-size: 1em;"
+      >
+        <path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"></path>
+      </svg>
+    </button>
+    <dialog style="padding:0" aria-label="搜索" class="astro-uepz5znf">
+      <div class="dialog-frame sl-flex astro-uepz5znf">
+        <button data-close-modal class="sl-flex md:sl-hidden astro-uepz5znf">取消</button>
+        <div class="search-container astro-uepz5znf">
+          <div id="starlight__search" class="astro-uepz5znf"></div>
+        </div>
+      </div>
+    </dialog>
+  </starlight-search>
+</div>
+
+<style>
+  .afsm-search-wrapper {
+    display: flex;
+    align-items: center;
+  }
+  .afsm-search-trigger {
+    background: transparent !important;
+    border: 1px solid var(--afsm-border) !important;
+    border-radius: 6px !important;
+    padding: 6px 8px !important;
+    color: var(--afsm-accent) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    height: 32px !important;
+    width: 32px !important;
+  }
+  .afsm-search-trigger:hover {
+    border-color: var(--afsm-accent) !important;
+    background: var(--afsm-accent-soft) !important;
+  }
+  .afsm-search-trigger kbd,
+  .afsm-search-trigger span {
+    display: none !important;
+  }
+</style>

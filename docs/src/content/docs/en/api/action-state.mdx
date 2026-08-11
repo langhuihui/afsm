@@ -1,0 +1,75 @@
+---
+title: "@ActionState"
+---
+import EmbeddedPlayground from '../../../../components/EmbeddedPlayground.tsx';
+
+
+
+Action state decorator. Temporarily enters a specified state during async execution, returns to the original state after.
+
+## Signature
+
+```ts
+function ActionState(name?: string): MethodDecorator
+```
+
+## Parameters
+
+| Parameter | Description |
+| --- | --- |
+| `name` | Temporary state name. Defaults to the method name if omitted. |
+
+## Behavior
+
+```ts
+class Doc extends FSM {
+  @ActionState('saving')
+  async save() {
+    await persist()
+  }
+}
+```
+
+Running `save()`:
+
+1. Record `old = this.state`
+2. `setState('saving')` (note: directly to `'saving'`, not a `MiddleState`)
+3. Run the original method
+   - Success: `setState(old)`, return the result
+   - Failure: `setState(old, err)`, throw the original error
+
+## vs @ChangeState
+
+| | `@ChangeState` | `@ActionState` |
+| --- | --- | --- |
+| Pre-execution validation | validates `from` | none |
+| Post-execution state | new stable state `to` | returns to original |
+| Intermediate | `MiddleState` (`${action}ing`) | directly `name` |
+| In stateDiagram | yes | no |
+| Failure rollback | to `from` | to original |
+
+:::caution
+`@ActionState` does not register in the module-level `stateDiagram` Map, so it doesn't appear in the auto-generated mermaid diagram. It describes a transient action, not a formal node.
+:::
+
+## Sync method support
+
+If the original method returns a sync value, behavior is the same (sync return, state restored):
+
+```ts
+@ActionState('refreshing')
+refresh() {
+  return this.cache
+}
+```
+
+## Example
+
+<EmbeddedPlayground client:only="react" example="data-fetch" autoRun />
+
+The `dataFetch` example uses `@ActionState('retrying')` to surface the retry-wait intermediate state.
+
+## See also
+
+- [Guide: Other Decorators](../guide/decorators)
+- [@ChangeState](./change-state)

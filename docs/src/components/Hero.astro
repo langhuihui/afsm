@@ -1,0 +1,30 @@
+---
+interface Props {
+  tagline: string;
+  ctaText: string;
+  ctaLink: string;
+}
+const { tagline, ctaText, ctaLink } = Astro.props;
+---
+
+<section class="hero not-content">
+  <div class="hero-glow"></div>
+  <div class="hero-content">
+    <div class="hero-logo">
+      <img src="/logo.png" alt="AFSM" width="96" height="96" />
+    </div>
+    <h1 class="hero-title">AFSM</h1>
+    <p class="hero-tagline">{tagline}</p>
+    <div class="hero-cta">
+      <a class="hero-btn hero-btn--primary" href={ctaLink}>{ctaText}</a>
+      <a class="hero-btn hero-btn--alt" href="/zh/playground">Playground</a>
+      <a class="hero-btn hero-btn--alt" href="https://github.com/langhuihui/afsm" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <div class="hero-meta">
+      <span class="hero-badge">TypeScript</span>
+      <span class="hero-badge">ESM</span>
+      <span class="hero-badge">Decorators</span>
+      <span class="hero-badge">Mermaid</span>
+    </div>
+  </div>
+</section>

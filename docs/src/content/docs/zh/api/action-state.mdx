@@ -1,0 +1,75 @@
+---
+title: "@ActionState"
+---
+import EmbeddedPlayground from '../../../../components/EmbeddedPlayground.tsx';
+
+
+
+动作态装饰器。异步执行期间临时进入指定状态，结束后回到原状态。
+
+## 签名
+
+```ts
+function ActionState(name?: string): MethodDecorator
+```
+
+## 参数
+
+| 参数 | 说明 |
+| --- | --- |
+| `name` | 临时状态名。省略时默认使用方法名 |
+
+## 行为
+
+```ts
+class Doc extends FSM {
+  @ActionState('saving')
+  async save() {
+    await persist()
+  }
+}
+```
+
+执行 `save()`：
+
+1. 记录 `old = this.state`
+2. `setState('saving')`（注意：是直接切到 `'saving'`，不是 `MiddleState`）
+3. 执行原方法
+   - 成功：`setState(old)`，返回结果
+   - 失败：`setState(old, err)`，抛出原错误
+
+## 与 @ChangeState 的区别
+
+| | `@ChangeState` | `@ActionState` |
+| --- | --- | --- |
+| 执行前校验 | 校验 `from` | 不校验 |
+| 执行后状态 | 进入新的稳定状态 `to` | 回到原状态 |
+| 中间态 | `MiddleState`（`${action}ing`） | 直接进入 `name` |
+| 状态图 | 出现在 `stateDiagram` | 不出现 |
+| 失败回滚 | 回到 `from` | 回到原状态 |
+
+:::caution
+`@ActionState` 不会注册到模块级 `stateDiagram` Map，因此不会出现在自动生成的 mermaid 状态图里。它描述的是「瞬态动作」而非状态机的正式节点。
+:::
+
+## 同步方法支持
+
+原方法若返回同步值，行为一致（同步返回，状态切回）：
+
+```ts
+@ActionState('refreshing')
+refresh() {
+  return this.cache
+}
+```
+
+## 示例
+
+<EmbeddedPlayground client:only="react" example="data-fetch" autoRun />
+
+`dataFetch` 示例用 `@ActionState('retrying')` 体现重试等待的中间态。
+
+## 参见
+
+- [指南：其他装饰器](../guide/decorators)
+- [@ChangeState](./change-state)

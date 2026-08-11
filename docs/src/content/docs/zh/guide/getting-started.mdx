@@ -1,0 +1,92 @@
+---
+title: "快速上手"
+---
+import EmbeddedPlayground from '../../../../components/EmbeddedPlayground.tsx';
+
+
+
+## 安装
+
+```bash
+npm install afsm
+# 或
+pnpm add afsm
+# 或
+yarn add afsm
+```
+
+AFSM 依赖 `eventemitter3` 和 TypeScript 实验性装饰器。
+
+## 配置 tsconfig
+
+AFSM 使用 TC39 stage 2 的装饰器提案，需要在 `tsconfig.json` 中开启：
+
+```json
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "target": "ES2017"
+  }
+}
+```
+
+> 注意：`useDefineForClassFields` 必须为 `false`（或保持默认未开启），否则会破坏装饰器语义。
+
+## 第一个状态机
+
+```ts
+import { FSM, ChangeState } from 'afsm'
+
+class MyFSM extends FSM {
+  @ChangeState(FSM.INIT, 'state1')
+  async gotoState1() {}
+
+  @ChangeState('state1', 'state2')
+  async gotoState2() {}
+}
+
+const obj = new MyFSM()
+obj.gotoState2()              // 抛错：当前是 [*]，不满足 from='state1'
+await obj.gotoState1()         // 状态变为 state1
+await obj.gotoState2()         // 状态变为 state2
+```
+
+## 监听状态变化
+
+```ts
+obj.on(FSM.STATECHANGED, (newState, oldState) => {
+  console.log(`${oldState} → ${newState}`)
+})
+```
+
+也可以监听特定状态或中间态：
+
+```ts
+obj.on('state1', () => console.log('到达 state1'))
+obj.on('gotoState2ing', () => console.log('正在前往 state2'))
+```
+
+## 查看状态图
+
+每个 FSM 实例都有一个 `stateDiagram` getter，自动生成 mermaid `stateDiagram-v2` 语法：
+
+```ts
+console.log(obj.stateDiagram.join('\n'))
+// [*] --> gotoState1ing : gotoState1
+// gotoState1ing --> state1 : gotoState1 🟢
+// gotoState1ing --> [*] : gotoState1 🔴
+// ...
+```
+
+## 在线试一试
+
+下面是「红绿灯」示例，可以调参后点运行：
+
+<EmbeddedPlayground client:only="react" example="traffic-light" autoRun />
+
+## 下一步
+
+- [核心概念](./core-concepts) — 深入了解 FSM 类、State、MiddleState
+- [@ChangeState](./change-state) — 状态迁移装饰器详解
+- [事件系统](./events) — 监听状态变化
