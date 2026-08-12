@@ -3,8 +3,11 @@ interface Props {
   tagline: string;
   ctaText: string;
   ctaLink: string;
+  playgroundLink: string;
+  devtoolsText: string;
+  devtoolsLink: string;
 }
-const { tagline, ctaText, ctaLink } = Astro.props;
+const { tagline, ctaText, ctaLink, playgroundLink, devtoolsText, devtoolsLink } = Astro.props;
 ---
 
 <section class="hero not-content">
@@ -17,7 +20,8 @@ const { tagline, ctaText, ctaLink } = Astro.props;
     <p class="hero-tagline">{tagline}</p>
     <div class="hero-cta">
       <a class="hero-btn hero-btn--primary" href={ctaLink}>{ctaText}</a>
-      <a class="hero-btn hero-btn--alt" href="/zh/playground">Playground</a>
+      <a class="hero-btn hero-btn--alt" href={devtoolsLink}>{devtoolsText}</a>
+      <a class="hero-btn hero-btn--alt" href={playgroundLink}>Playground</a>
       <a class="hero-btn hero-btn--alt" href="https://github.com/langhuihui/afsm" target="_blank" rel="noopener">GitHub</a>
     </div>
     <div class="hero-meta">
