@@ -21,7 +21,7 @@ function lineColor(level: string): string {
 export default function ConsoleOut({ lines }: ConsoleOutProps) {
   const empty = t('（无输出）', '(no output)');
   return (
-    <div className="max-h-[140px] overflow-auto whitespace-pre-wrap rounded-md border border-afsm-line bg-black/40 px-2.5 py-2 font-afsm-mono text-xs text-afsm-text">
+    <div className="max-h-[240px] overflow-auto whitespace-pre-wrap rounded-md border border-afsm-line bg-black/40 px-2.5 py-2 font-afsm-mono text-xs text-afsm-text">
       {lines.length === 0 ? (
         <div className="text-afsm-text-faint">{empty}</div>
       ) : (

@@ -1,5 +1,3 @@
-import type { ConsoleLine, TimelineItem } from './types';
-
 export interface TimelineItem {
   time: number;
   state: string;
@@ -38,6 +36,3 @@ export interface ExampleDef {
 
 export type LogLevel = 'log' | 'info' | 'warn' | 'error';
 export type LogFn = (level: LogLevel | string, ...args: any[]) => void;
-
-// re-export for convenience
-export type { ConsoleLine };

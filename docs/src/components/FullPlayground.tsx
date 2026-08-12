@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import StateDiagramView from './StateDiagramView';
 import Timeline from './Timeline';
-import type { TimelineItem, ConsoleLine } from './types';
+import type { TimelineItem, ConsoleLine, LogLevel } from './types';
 import ConsoleOut from './ConsoleOut';
 import { useLang, tt } from './i18n';
 import { getExample, listExamples } from '../examples';
@@ -11,7 +11,6 @@ import { configureMonaco, monacoEditorOptions } from '../scripts/monaco-config';
 // Side-effect: sets MonacoEnvironment BEFORE monaco-editor is imported below.
 import '../scripts/monaco-env';
 
-type WebContainer = any; // @webcontainer/api
 type WCInstance = any;
 
 interface BootState {
@@ -27,6 +26,36 @@ function mainTsForExample(key: string): string {
   return exampleToMainTs(ex.source, params);
 }
 
+function guessLogLevel(line: string): LogLevel {
+  if (/error|ERR!|failed|EACCES|ENOENT/i.test(line)) return 'error';
+  if (/warn|WARN/i.test(line)) return 'warn';
+  if (/ready|listening|Local:|server ready/i.test(line)) return 'info';
+  return 'log';
+}
+
+/** Pipe a WebContainer process stdout/stderr stream into the playground console. */
+function pipeProcessOutput(
+  proc: { output: ReadableStream<string> },
+  prefix: string,
+  append: (level: LogLevel, text: string) => void
+) {
+  proc.output
+    .pipeTo(
+      new WritableStream({
+        write(data) {
+          const chunk = String(data);
+          for (const line of chunk.split(/\r?\n/)) {
+            if (!line.trim()) continue;
+            append(guessLogLevel(line), `[${prefix}] ${line}`);
+          }
+        }
+      })
+    )
+    .catch(() => {
+      // Stream closes when the process exits; ignore.
+    });
+}
+
 export default function FullPlayground() {
   const lang = useLang();
   const [examples] = useState(() => listExamples());
@@ -38,6 +67,7 @@ export default function FullPlayground() {
   const [diagram, setDiagram] = useState<string[]>([]);
   const [currentState, setCurrentState] = useState('');
   const [previewUrl, setPreviewUrl] = useState('');
+  const [iframeKey, setIframeKey] = useState(0);
   const [running, setRunning] = useState(false);
 
   const editorContainerRef = useRef<HTMLDivElement>(null);
@@ -49,6 +79,10 @@ export default function FullPlayground() {
   const listenersBoundRef = useRef(false);
 
   const supported = typeof window !== 'undefined' && isWebContainerSupported();
+
+  const appendLog = useCallback((level: LogLevel, text: string) => {
+    setConsoleLog((c) => [...c, { level, text, time: Date.now() }]);
+  }, []);
 
   const handleMessage = useCallback((e: MessageEvent) => {
     const data = e.data;
@@ -121,40 +155,70 @@ export default function FullPlayground() {
     setDiagram([]);
     setRunning(true);
     try {
+      setBootState({ status: 'booting' });
+      appendLog('info', '[wc] booting WebContainer…');
       const wc = await getWebContainer();
       wcRef.current = wc;
+      appendLog('info', '[wc] WebContainer ready');
+
+      if (!listenersBoundRef.current) {
+        listenersBoundRef.current = true;
+        wc.on('server-ready', (_port: number, url: string) => {
+          appendLog('info', `[wc] server-ready ${_port} → ${url}`);
+          setPreviewUrl(url);
+          // Force iframe remount so main.ts re-executes after remount/restart.
+          setIframeKey((k) => k + 1);
+          setBootState({ status: 'ready' });
+        });
+        wc.on('error', (err: { message: string }) => {
+          appendLog('error', `[wc] ${err.message}`);
+          setBootState({ status: 'error', message: err.message });
+          setRunning(false);
+        });
+      }
+
       setBootState({ status: 'mounting' });
+      appendLog('info', '[wc] mounting virtual filesystem…');
       const fs = buildVirtualFs(editorValue);
       await wc.mount(fs);
+      appendLog('info', '[wc] filesystem mounted');
 
       if (!installedRef.current) {
         setBootState({ status: 'installing', message: 'npm install...' });
+        appendLog('info', '[npm] npm install…');
         const installProc = await wc.spawn('npm', ['install']);
-        await installProc.exit;
+        pipeProcessOutput(installProc, 'npm', appendLog);
+        const installCode = await installProc.exit;
+        if (installCode !== 0) {
+          throw new Error(`npm install failed (exit ${installCode})`);
+        }
+        appendLog('info', '[npm] install complete');
         installedRef.current = true;
       }
 
       setBootState({ status: 'starting', message: 'vite...' });
       // Kill any previous dev server
       if (devServerProcRef.current) {
-        try { await devServerProcRef.current.kill(); } catch {}
+        appendLog('info', '[vite] stopping previous dev server…');
+        try {
+          await devServerProcRef.current.kill();
+        } catch {}
+        devServerProcRef.current = null;
       }
+      appendLog('info', '[vite] starting `npm run dev`…');
       const devProc = await wc.spawn('npm', ['run', 'dev']);
       devServerProcRef.current = devProc;
-
-      if (!listenersBoundRef.current) {
-        listenersBoundRef.current = true;
-        wc.on('server-ready', (_port: number, url: string) => {
-          setPreviewUrl(url);
-          setBootState({ status: 'ready' });
-        });
-        wc.on('error', (err: { message: string }) => {
-          setBootState({ status: 'error', message: err.message });
-          setRunning(false);
-        });
-      }
+      pipeProcessOutput(devProc, 'vite', appendLog);
+      // Do not await exit — vite stays running; readiness comes via server-ready.
+      void devProc.exit.then((code: number) => {
+        if (devServerProcRef.current === devProc) {
+          appendLog(code === 0 ? 'info' : 'error', `[vite] process exited (${code})`);
+        }
+      });
     } catch (e: any) {
-      setBootState({ status: 'error', message: e?.message || String(e) });
+      const msg = e?.message || String(e);
+      appendLog('error', `[wc] ${msg}`);
+      setBootState({ status: 'error', message: msg });
       setRunning(false);
     }
   }
@@ -165,6 +229,7 @@ export default function FullPlayground() {
     setCurrentState('');
     setDiagram([]);
     setPreviewUrl('');
+    setIframeKey(0);
     setBootState({ status: 'idle' });
     setRunning(false);
   }
@@ -230,6 +295,17 @@ export default function FullPlayground() {
 
   return (
     <div className="afsm-panel not-content my-4!">
+      {/* Hidden iframe hosts the WebContainer vite preview; FSM events arrive via postMessage. */}
+      {previewUrl ? (
+        <iframe
+          key={iframeKey}
+          src={previewUrl}
+          title="AFSM WebContainer Preview"
+          className="pointer-events-none absolute h-0 w-0 border-0 opacity-0"
+          aria-hidden
+          onLoad={() => appendLog('info', `[wc] preview iframe loaded (#${iframeKey})`)}
+        />
+      ) : null}
       <div className="flex min-h-[52px] flex-wrap items-center justify-between gap-3 border-b border-afsm-line bg-gradient-to-r from-afsm-accent/5 to-transparent px-3.5 py-2.5">
         <div className="flex items-center gap-2.5 text-sm font-semibold leading-none text-afsm-accent">
           <span>AFSM Playground</span>
@@ -272,7 +348,7 @@ export default function FullPlayground() {
           <StateDiagramView diagram={diagram} currentState={currentState} />
           <h4 className="afsm-section-label">{tt('timeline')}</h4>
           <Timeline items={history} />
-          <h4 className="afsm-section-label">{tt('console')}</h4>
+          <h4 className="afsm-section-label">{tt('console')} / {tt('wcLogs')}</h4>
           <ConsoleOut lines={consoleLog} />
         </div>
       </div>

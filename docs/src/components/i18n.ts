@@ -31,6 +31,7 @@ export const i18n = {
   source: { zh: '源代码', en: 'Source' },
   timeline: { zh: '时间线', en: 'Timeline' },
   console: { zh: '控制台', en: 'Console' },
+  wcLogs: { zh: 'WebContainer 日志', en: 'WebContainer Logs' },
   state: { zh: '当前状态', en: 'Current State' },
   diagram: { zh: '状态图', en: 'State Diagram' },
   idle: { zh: '空闲', en: 'idle' },
