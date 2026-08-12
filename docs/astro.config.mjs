@@ -181,10 +181,11 @@ export default defineConfig({
     plugins: [tailwindcss(), coepForWorkers()],
     resolve: {
       // One React copy across the island graph (docs react + @astrojs/react/client).
-      dedupe: ['react', 'react-dom'],
-      alias: {
-        'afsm-diagram': path.resolve(repoRoot, 'shared/afsm-diagram/src/index.ts')
-      }
+      dedupe: ['react', 'react-dom']
+      // Do NOT alias `afsm-diagram` to its source path: Vite then resolves
+      // `cytoscape` from `shared/afsm-diagram/`, which has no node_modules on
+      // Vercel (only docs/ is installed). Let the file: package link resolve
+      // so cytoscape comes from docs' pnpm store.
     },
     server: {
       fs: {
