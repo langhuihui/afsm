@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type { ConsoleLine } from './types';
 import { t } from './i18n';
 
@@ -20,8 +21,19 @@ function lineColor(level: string): string {
 
 export default function ConsoleOut({ lines }: ConsoleOutProps) {
   const empty = t('（无输出）', '(no output)');
+  const scrollerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [lines]);
+
   return (
-    <div className="max-h-[240px] overflow-auto whitespace-pre-wrap rounded-md border border-afsm-line bg-black/40 px-2.5 py-2 font-afsm-mono text-xs text-afsm-text">
+    <div
+      ref={scrollerRef}
+      className="max-h-[240px] overflow-auto whitespace-pre-wrap rounded-md border border-afsm-line bg-black/40 px-2.5 py-2 font-afsm-mono text-xs text-afsm-text"
+    >
       {lines.length === 0 ? (
         <div className="text-afsm-text-faint">{empty}</div>
       ) : (
