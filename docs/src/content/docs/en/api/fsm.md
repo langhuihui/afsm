@@ -67,7 +67,7 @@ Inherited from `eventemitter3`:
 
 ### `updateDevTools(payload?)`
 
-Sends an update to the DevTools extension. Usually called automatically by `setState` — no need to call manually.
+Sends an update to the DevTools extension. Usually called automatically by `setState` — no need to call manually. The library also keeps a last-known snapshot per instance and replays it when the extension dispatches `__AFSM_DUMP__`.
 
 ## Constructor
 

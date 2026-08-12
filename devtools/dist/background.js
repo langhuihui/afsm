@@ -1,83 +1,52 @@
-
-/**
-When we receive the message, execute the given script in the given
-tab.
-*/
-// function handleMessage(request, sender, sendResponse) {
-
-//   if (sender.url != chrome.runtime.getURL("/devtools/panel/panel.html")) {
-//     return;
-//   }
-
-//   chrome.tabs.executeScript(
-//     request.tabId, 
-//     {
-//       code: request.script
-//     });
-
-// }
-
-// /**
-// Listen for messages from our devtools panel.
-// */
-// chrome.runtime.onMessage.addListener(handleMessage); 
 const ports = {};
-chrome.runtime.onConnect.addListener(port => {
-  let tabId;
+
+function slot(tabId) {
+  if (!ports[tabId]) ports[tabId] = { panel: null, content: null };
+  return ports[tabId];
+}
+
+function requestDump(content) {
+  try {
+    content.postMessage({ type: 'dump' });
+  } catch {
+    // content port already gone
+  }
+}
+
+chrome.runtime.onConnect.addListener((port) => {
   if (isNumeric(port.name)) {
-    tabId = +port.name;
-    if (!ports[tabId]) ports[tabId] = [];
-    ports[tabId][0] = port;
-    console.log('devtool-page connected ' + tabId, port.sender);
-    port.onMessage.addListener(msg => {
-      ports[tabId][1].postMessage(msg);
+    const tabId = +port.name;
+    const s = slot(tabId);
+    s.panel = port;
+    port.onDisconnect.addListener(() => {
+      if (s.panel === port) s.panel = null;
     });
-    if (ports[tabId][1]) {
+    if (s.content) {
       port.postMessage('🎟️');
+      requestDump(s.content);
     }
   } else {
-    tabId = port.sender.tab.id;
-    if (!ports[tabId]) ports[tabId] = [];
-    ports[tabId][1] = port;
-    console.log('frontend connected ' + tabId);
+    const tabId = port.sender?.tab?.id;
+    if (tabId == null) return;
+    const s = slot(tabId);
+    s.content = port;
     port.onMessage.addListener((message) => {
-      if (ports[tabId][0]) {
-        console.log('backend -> devtools', message);
-        ports[tabId][0].postMessage(message);
+      try {
+        s.panel?.postMessage(message);
+      } catch {
+        // panel closed
       }
     });
     port.onDisconnect.addListener(() => {
-      ports[tabId][1] = null;
-      console.log('frontend disconnected ' + tabId);
+      if (s.content === port) s.content = null;
     });
-    if (ports[tabId][0]) {
-      ports[tabId][0].postMessage('🎟️');
+    if (s.panel) {
+      s.panel.postMessage('🎟️');
+      requestDump(port);
     }
-    // chrome.tabs.executeScript(tabId, {
-    //   file: 'inject.js',
-    // }, () => {
-    //   console.log('inject success ' + tabId);
-    // });
   }
 });
 
 function isNumeric(str) {
   return +str + '' === str;
 }
-
-chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-  const { content } = message;
-  switch (message.type) {
-    case 'download': {
-      const blob = new Blob([content], { type: "text/plain" });
-      const url = URL.createObjectURL(blob);
-      chrome.downloads.download({
-        url,
-        filename: 'data',
-      });
-      break;
-    }
-    default:
-      console.warn('unknown message type ' + message.type);
-  }
-});

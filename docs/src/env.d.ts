@@ -27,9 +27,3 @@ declare module '*?worker' {
   export default workerConstructor;
 }
 
-// cytoscape-dagre ships no TypeScript types
-declare module 'cytoscape-dagre' {
-  import type cytoscape from 'cytoscape';
-  const dagre: cytoscape.Ext;
-  export default dagre;
-}

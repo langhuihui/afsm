@@ -174,16 +174,45 @@ export function ActionState(name?: string) {
   };
 }
 
-const sendDevTools = (() => {
+const AFSM_DUMP = '__AFSM_DUMP__';
+type DevToolsSnap = { name: string; group: string; diagram?: string[]; value?: any; old?: any; err?: string; };
+const snapshots = new Map<string, DevToolsSnap>();
+function pageHasDevTools() {
   //@ts-ignore
-  const hasDevTools = typeof window !== 'undefined' && window['__AFSM__'];
-  const inWorker = typeof importScripts !== 'undefined';
-  return hasDevTools ? (name: string, detail: any) => {
+  return typeof window !== 'undefined' && window['__AFSM__'];
+}
+function sendDevTools(name: string, detail: any) {
+  if (detail && detail.name != null) {
+    const key = `${detail.group}®️${detail.name}`;
+    const snap: DevToolsSnap = snapshots.get(key) || { name: detail.name, group: detail.group };
+    if (detail.diagram) snap.diagram = detail.diagram;
+    if ('value' in detail) {
+      snap.value = detail.value;
+      snap.old = detail.old;
+      snap.err = detail.err;
+    }
+    snapshots.set(key, snap);
+  }
+  if (pageHasDevTools()) {
     window.dispatchEvent(new CustomEvent(name, { detail }));
-  } : inWorker ? (type: string, payload: any) => {
-    postMessage({ type, payload });
-  } : () => { };
-})();
+  } else if (typeof importScripts !== 'undefined') {
+    postMessage({ type: name, payload: detail });
+  }
+}
+if (typeof window !== 'undefined') {
+  window.addEventListener(AFSM_DUMP, () => {
+    if (!pageHasDevTools()) return;
+    for (const snap of snapshots.values()) {
+      const { name, group, diagram, value, old, err } = snap;
+      if (diagram) {
+        window.dispatchEvent(new CustomEvent('updateAFSM', { detail: { name, group, diagram } }));
+      }
+      if ('value' in snap) {
+        window.dispatchEvent(new CustomEvent('updateAFSM', { detail: { name, group, value, old, err } }));
+      }
+    }
+  });
+}
 function setState(this: FSM, value: State, err?: any) {
   const old = this._state;
   this._state = value;

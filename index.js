@@ -173,16 +173,47 @@ export function ActionState(name) {
         };
     };
 }
-const sendDevTools = (() => {
+const AFSM_DUMP = '__AFSM_DUMP__';
+const snapshots = new Map();
+function pageHasDevTools() {
     //@ts-ignore
-    const hasDevTools = typeof window !== 'undefined' && window['__AFSM__'];
-    const inWorker = typeof importScripts !== 'undefined';
-    return hasDevTools ? (name, detail) => {
+    return typeof window !== 'undefined' && window['__AFSM__'];
+}
+function sendDevTools(name, detail) {
+    if (detail && detail.name != null) {
+        const key = `${detail.group}®️${detail.name}`;
+        const snap = snapshots.get(key) || { name: detail.name, group: detail.group };
+        if (detail.diagram)
+            snap.diagram = detail.diagram;
+        if ('value' in detail) {
+            snap.value = detail.value;
+            snap.old = detail.old;
+            snap.err = detail.err;
+        }
+        snapshots.set(key, snap);
+    }
+    if (pageHasDevTools()) {
         window.dispatchEvent(new CustomEvent(name, { detail }));
-    } : inWorker ? (type, payload) => {
-        postMessage({ type, payload });
-    } : () => { };
-})();
+    }
+    else if (typeof importScripts !== 'undefined') {
+        postMessage({ type: name, payload: detail });
+    }
+}
+if (typeof window !== 'undefined') {
+    window.addEventListener(AFSM_DUMP, () => {
+        if (!pageHasDevTools())
+            return;
+        for (const snap of snapshots.values()) {
+            const { name, group, diagram, value, old, err } = snap;
+            if (diagram) {
+                window.dispatchEvent(new CustomEvent('updateAFSM', { detail: { name, group, diagram } }));
+            }
+            if ('value' in snap) {
+                window.dispatchEvent(new CustomEvent('updateAFSM', { detail: { name, group, value, old, err } }));
+            }
+        }
+    });
+}
 function setState(value, err) {
     const old = this._state;
     this._state = value;
@@ -193,26 +224,6 @@ function setState(value, err) {
     this.updateDevTools({ value, old, err: err instanceof Error ? err.message : String(err) });
 }
 export class FSM extends EventEmitter {
-    constructor(name, groupName, prototype) {
-        super();
-        this.name = name;
-        this.groupName = groupName;
-        this._state = FSM.INIT;
-        if (!name)
-            name = Date.now().toString(36);
-        if (!prototype)
-            prototype = Object.getPrototypeOf(this);
-        else
-            Object.setPrototypeOf(this, prototype);
-        if (!groupName)
-            this.groupName = this.constructor.name;
-        const names = prototype[instance];
-        if (!names)
-            prototype[instance] = { name: this.name, count: 0 };
-        else
-            this.name = names.name + "-" + names.count++;
-        this.updateDevTools({ diagram: this.stateDiagram });
-    }
     get stateDiagram() {
         const protoType = Object.getPrototypeOf(this);
         const stateConfig = stateDiagram.get(protoType) || [];
@@ -280,6 +291,26 @@ export class FSM extends EventEmitter {
     static getState(context) {
         var _a;
         return (_a = FSM.get(context)) === null || _a === void 0 ? void 0 : _a.state;
+    }
+    constructor(name, groupName, prototype) {
+        super();
+        this.name = name;
+        this.groupName = groupName;
+        this._state = FSM.INIT;
+        if (!name)
+            name = Date.now().toString(36);
+        if (!prototype)
+            prototype = Object.getPrototypeOf(this);
+        else
+            Object.setPrototypeOf(this, prototype);
+        if (!groupName)
+            this.groupName = this.constructor.name;
+        const names = prototype[instance];
+        if (!names)
+            prototype[instance] = { name: this.name, count: 0 };
+        else
+            this.name = names.name + "-" + names.count++;
+        this.updateDevTools({ diagram: this.stateDiagram });
     }
     updateDevTools(payload = {}) {
         sendDevTools(FSM.UPDATEAFSM, Object.assign({ name: this.name, group: this.groupName }, payload));

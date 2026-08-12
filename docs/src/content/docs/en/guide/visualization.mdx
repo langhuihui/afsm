@@ -86,13 +86,19 @@ Subclasses auto-merge the parent's diagram. Accessing `sub.stateDiagram` recursi
 
 ## Live observation with DevTools
 
-With the [DevTools extension](../advanced/devtools), you can see the current state machine diagram live in the browser DevTools, with the current state marked.
+Static mermaid is great in docs; for **runtime** inspection, install the [DevTools extension](../advanced/devtools):
 
-The Playground on this site integrates the same visualization — try it live:
+1. Load unpacked from `devtools/dist` (Chrome / Edge developer mode)
+2. Open your page or this site’s Playground, press <kbd>F12</kbd>
+3. Switch to the **AFSM** tab for the instance tree, diagram, and timeline
+
+With the [DevTools extension](../advanced/devtools), you can watch the live graph with current / processing highlights.
+
+The Playground on this site uses the same Cytoscape visualization — try it live:
 
 <EmbeddedPlayground client:only="react" example="data-fetch" autoRun />
 
 ## Next steps
 
 - [API: FSM class](../api/fsm) — `stateDiagram` full definition
-- [DevTools extension](../advanced/devtools) — install & usage
+- [DevTools extension](../advanced/devtools) — install, panel guide, troubleshooting

@@ -12,9 +12,10 @@
     "verbatimModuleSyntax": false,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "afsm-diagram": ["../shared/afsm-diagram/src/index.ts"]
     }
   },
-  "include": [".astro/types.d.ts", "src/**/*"],
+  "include": [".astro/types.d.ts", "src/**/*", "../shared/afsm-diagram/src/**/*"],
   "exclude": ["dist"]
 }

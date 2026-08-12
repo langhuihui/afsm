@@ -67,7 +67,7 @@ console.log(obj.state)   // '[*]'
 
 ### `updateDevTools(payload?)`
 
-向 DevTools 扩展发送更新。通常不需要手动调用——`setState` 会自动调用。
+向 DevTools 扩展发送更新。通常不需要手动调用——`setState` 会自动调用。库会为每个实例保留最近一次快照，并在扩展派发 `__AFSM_DUMP__` 时重放。
 
 ## 构造函数
 

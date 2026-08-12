@@ -61,7 +61,7 @@ When `fetch()` is called, AFSM will:
 - **`FSM.stateDiagram`** — auto-generates a mermaid state diagram for visualizing the topology
 - **`context`** — compose multiple independent state machines in one class
 - **`abortAction`** — interrupt an in-flight MiddleState
-- **DevTools extension** — a Chrome DevTools panel to inspect running state machines live
+- **DevTools extension** — [Chrome / Edge panel](../advanced/devtools) to inspect running state machines live
 
 ## Use cases
 
@@ -70,4 +70,4 @@ When `fetch()` is called, AFSM will:
 - Any "finite state + async transition" business flow
 - Complex state machines that need visualization and observability
 
-Next, head to [Quick Start](./getting-started) to write your first state machine.
+Next, head to [Quick Start](./getting-started) to write your first state machine, or [install DevTools](../advanced/devtools) first.

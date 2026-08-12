@@ -82,18 +82,17 @@ function run() {
 
 `log` 函数由 Playground 注入，把输出收集到 `ConsoleOut` 面板（不替换全局 `console`）。
 
-## Mermaid 渲染
+## 状态图渲染
 
-`MermaidView.vue` 动态 import mermaid，在 `onMounted` 内初始化并渲染：
+`StateDiagramView` 使用共享包 `afsm-diagram`（Cytoscape）渲染 AFSM `stateDiagram` 边线：
 
 ```ts
-const mermaid = (await import('mermaid')).default
-await mermaid.initialize({ startOnLoad: false, securityLevel: 'loose' })
-const { svg } = await mermaid.render(id, source)
-containerRef.value.innerHTML = svg
+import { createDiagram, syncDiagram } from 'afsm-diagram'
+const cy = createDiagram(container, 'docs')
+syncDiagram(cy, diagram, currentState, sourceKey)
 ```
 
-当前状态通过 mermaid `note left of <state> : 🚩` 标记（只在当前状态是图中的真实节点时才添加）。
+当前状态通过 `.current` / `.processing` 节点类高亮（不再使用 mermaid note）。DevTools 面板使用同一套渲染器。
 
 ## 清理
 

@@ -1,11 +1,28 @@
 <script setup lang="ts">
 /// <reference types="chrome" />
-import { computed, h, onMounted, reactive, ref, watchEffect } from 'vue';
+import { computed, h, reactive, ref } from 'vue';
 import { format } from 'date-fns';
-//@ts-ignore
-import mermaid from 'mermaid';
+import { darkTheme, type DataTableColumn, type TreeOption } from 'naive-ui';
 import SuffixVue from './components/Suffix.vue';
-import { DataTableColumn, TreeOption } from 'naive-ui';
+import StateDiagramView from './components/StateDiagramView.vue';
+
+const HISTORY_LIMIT = 2000;
+const FSM_HISTORY_LIMIT = 500;
+const zh = (typeof chrome !== 'undefined' && chrome.i18n?.getUILanguage?.() || navigator.language).startsWith('zh');
+const t = {
+  title: zh ? '智能状态机可视化' : 'AFSM Inspector',
+  connected: zh ? '已连接' : 'Connected',
+  disconnected: zh ? '未连接' : 'Disconnected',
+  clear: zh ? '清空' : 'Clear',
+  copy: zh ? '复制' : 'Copy',
+  paste: zh ? '粘贴' : 'Paste',
+  download: zh ? '下载' : 'Download',
+  copyFailed: zh ? '复制失败' : 'Copy failed',
+  pasteFailed: zh ? '粘贴失败，数据格式无效' : 'Paste failed: invalid data',
+  time: 'Time',
+};
+const isDark = typeof chrome !== 'undefined' && chrome.devtools?.panels?.themeName === 'dark';
+
 const fsms: { [key: string]: FSMInfo; } = {};
 const group: { [key: string]: TreeOption; } = reactive({});
 const fsmGroup = reactive([] as TreeOption[]);
@@ -27,33 +44,36 @@ function getInfoUniqueName(info: { name: string, group: string; }) {
   return `${info.group}®️${info.name}`;
 }
 const connected = ref(false);
-const allHistory: { key: string, state: FSMStateInfo; }[] = [];//总体历史
+const allHistory: { key: string, state: FSMStateInfo; }[] = [];
 const reconnect = () => {
   try {
     const port = chrome.runtime.connect({
-      name: "" + chrome.devtools.inspectedWindow.tabId,
+      name: '' + chrome.devtools.inspectedWindow.tabId,
     });
-    console.log("Connected to background", port);
     port.onMessage.addListener((data: '🎟️' | FrontMessage | NoteMessage | CreateMessage | ChangeMessage) => {
       if (data == '🎟️') {
-        console.log("content connected", port);
         connected.value = true;
         clearAll();
       } else if ('diagram' in data) {
-        const initState = { time: Date.now(), state: "[*]", action: "", processing: false, note: "" };
+        const key = getInfoUniqueName(data);
+        if (fsms[key]) {
+          fsms[key].diagram = data.diagram;
+          return;
+        }
+        const initState = { time: Date.now(), state: '[*]', action: '', processing: false, note: '' };
         if (!group[data.group]) {
           group[data.group] = { key: data.group, label: data.group, children: [] };
           fsmGroup.push(group[data.group]);
-        };
+        }
         const newInfo = reactive({
           ...data,
-          key: getInfoUniqueName(data),
+          key,
           state: initState,
           history: [initState],
         });
-        allHistory.push({ key: newInfo.key, state: initState });
-        group[data.group].children?.push({ key: newInfo.key, label: data.name, isLeaf: true });
-        fsms[newInfo.key] = newInfo;
+        pushAllHistory({ key, state: initState });
+        group[data.group].children?.push({ key, label: data.name, isLeaf: true });
+        fsms[key] = newInfo;
         if (!currentFSM.value) currentFSM.value = newInfo;
       } else if ('note' in data) {
         const infoKey = getInfoUniqueName(data);
@@ -63,10 +83,10 @@ const reconnect = () => {
         if (fsms[infoKey]) {
           const info = fsms[infoKey];
           let success = typeof data.old == 'string' || data.old.oldState != data.value;
-          const action = typeof data.old != 'string' ? data.old.action + (success ? '🟢' : '🔴') : typeof data.value != 'string' ? data.value.action : "";
-          info.state = { note: "", time: Date.now(), processing: typeof data.value != 'string', state: typeof data.value == 'string' ? data.value : data.value.action + 'ing', err: data.err, action };
-          info.history.push(info.state);
-          allHistory.push({ key: infoKey, state: info.state });
+          const action = typeof data.old != 'string' ? data.old.action + (success ? '🟢' : '🔴') : typeof data.value != 'string' ? data.value.action : '';
+          info.state = { note: '', time: Date.now(), processing: typeof data.value != 'string', state: typeof data.value == 'string' ? data.value : data.value.action + 'ing', err: data.err, action };
+          pushFsmHistory(info, info.state);
+          pushAllHistory({ key: infoKey, state: info.state });
         }
       } else {
         const infoKey = getInfoUniqueName(data);
@@ -80,18 +100,30 @@ const reconnect = () => {
             fsmGroup.splice(fsmGroup.findIndex(x => x.key == data.group), 1);
             delete group[data.group];
           }
+          delete fsms[infoKey];
         }
       }
     });
     port.onDisconnect.addListener(() => {
-      console.log("disconnect");
       connected.value = false;
       setTimeout(reconnect, 1000);
     });
-  } catch (err) {
+  } catch {
     setTimeout(reconnect, 1000);
   }
 };
+function pushAllHistory(entry: { key: string, state: FSMStateInfo; }) {
+  allHistory.push(entry);
+  if (allHistory.length > HISTORY_LIMIT) {
+    allHistory.splice(0, allHistory.length - HISTORY_LIMIT);
+  }
+}
+function pushFsmHistory(info: FSMInfo, state: FSMStateInfo) {
+  info.history.push(state);
+  if (info.history.length > FSM_HISTORY_LIMIT) {
+    info.history.splice(0, info.history.length - FSM_HISTORY_LIMIT);
+  }
+}
 function clearAll() {
   fsmGroup.length = 0;
   for (const key in group) {
@@ -102,30 +134,12 @@ function clearAll() {
   }
   allHistory.length = 0;
   checked.value.length = 0;
+  checkedKeys.value = [];
   currentFSM.value = null;
 }
 reconnect();
 const currentFSM = ref(null as FSMInfo | null);
-const divRef = ref();
 const checked = ref([] as FSMInfo[]);
-// const timeline = computed(() => {
-//   const keys = checked.value.filter(key => fsms[key]);
-//   const result = keys.map(key => [] as Array<FSMStateInfo | number>);
-//   let i = 0;
-//   let next = i;
-//   for (let h of allHistory) {
-//     for (let j = 0; j < result.length; j++) {
-//       if (h.key == keys[j]) {
-//         result[j][i] = h.state;
-//         next = i + 1;
-//       } else {
-//         result[j][i] = h.state.time;
-//       }
-//     }
-//     i = next;
-//   }
-//   return result;
-// });
 const columns = ref([] as DataTableColumn[]);
 const data = computed(() => {
   let i = 0;
@@ -153,26 +167,13 @@ function updateCheckedKeys(keys: string[]) {
       title: () => h('div', [info.group, h('br'), info.name]), key: info.key
     };
   });
-  columns.value.unshift({ title: "Time", key: "time", width: 130 });
+  columns.value.unshift({ title: t.time, key: 'time', width: 130 });
 }
-watchEffect(() => {
-  if (divRef.value && currentFSM.value && currentFSM.value.diagram.length)
-    mermaid.mermaidAPI.render('mermaid', ['stateDiagram-v2', ...currentFSM.value.diagram, `note left of ${currentFSM.value.state.state} : 🚩`].join('\n'), function (svgCode: string) {
-      divRef.value.innerHTML = svgCode;
-    });
-});
-const Mermaid = function () {
-  return h('div', {
-    class: 'mermaid',
-    id: currentFSM.value!.name,
-    ref: divRef,
-  });
-};
 function renderSuffix({ option }: { option: TreeOption; }) {
   return fsms[option.key!] ? h(
     SuffixVue,
     { state: fsms[option.key!].state },
-  ) : h("");
+  ) : h('');
 }
 function onSelected(keys: string[]) {
   currentFSM.value = fsms[keys[0]];
@@ -180,102 +181,107 @@ function onSelected(keys: string[]) {
 }
 const checkedKeys = ref([] as string[]);
 async function copy() {
-  //@ts-ignore
-  navigator.permissions.query({ name: 'clipboard-write' }).then(permissionStatus => {
-    if (permissionStatus.state == 'granted') {
-      navigator.clipboard.writeText(JSON.stringify(allHistory));
-    } else {
-      alert("You must grant clipboard permission to copy data");
-    }
-  });
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(allHistory));
+  } catch {
+    alert(t.copyFailed);
+  }
 }
 async function paste() {
-  //@ts-ignore
-  const permissionStatus = await navigator.permissions.query({ name: 'clipboard-read' });
-  if (permissionStatus.state == 'granted') {
+  try {
     const text = await navigator.clipboard.readText();
+    const parsed = JSON.parse(text) as { key: string, state: FSMStateInfo; }[];
+    if (!Array.isArray(parsed)) throw new Error('invalid');
     clearAll();
-    const data = JSON.parse(text);
-    for (const d of data) {
+    for (const d of parsed) {
+      if (!d?.key || !d.state) continue;
       const [_group, name] = d.key.split('®️');
+      if (!_group || !name) continue;
       if (!group[_group]) {
         group[_group] = { key: _group, label: _group, children: [] };
         fsmGroup.push(group[_group]);
-      };
-      allHistory.push(d);
-      group[data.group].children?.push({ key: d.key, label: name, isLeaf: true });
-      if (!fsms[d.key]) fsms[d.key] = { group: _group, name, key: d.key, state: d.state, history: [d.state], diagram: [] };
-      else fsms[d.key].history.push(d.state);
+      }
+      pushAllHistory(d);
+      if (!fsms[d.key]) {
+        group[_group].children?.push({ key: d.key, label: name, isLeaf: true });
+        fsms[d.key] = { group: _group, name, key: d.key, state: d.state, history: [d.state], diagram: [] };
+      } else {
+        pushFsmHistory(fsms[d.key], d.state);
+        fsms[d.key].state = d.state;
+      }
     }
-  } else {
-    alert("You must grant clipboard permission to paste data");
+  } catch {
+    alert(t.pasteFailed);
   }
 }
-async function download() {
-  //@ts-ignore
-  // safe size limit: 50 MB. ref: https://stackoverflow.com/questions/31925936/is-there-a-size-limit-like-32bytes-or-64bytes-for-message-passing-between-conte
-  const message = {
-    type: 'download',
-    content: JSON.stringify(allHistory)
-  };
-  chrome.runtime.sendMessage(message);
+function download() {
+  const blob = new Blob([JSON.stringify(allHistory)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `afsm-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 </script>
 
 <template>
-  <n-layout style="height: 100vh">
-    <n-layout-header>
-      <n-space class="title-bar">
-        <n-avatar size="small" src="./logo.png">
-        </n-avatar>
-        <span class="title">智能状态机可视化界面</span>
-        <n-tag round :bordered="false" :type="connected ? 'success' : 'error'">
-          {{ connected ? "已连接" : "未连接" }}
-        </n-tag>
-        <n-button size="small" @click="clearAll">清空</n-button>
-        <n-button size="small" @click="copy">复制到剪贴板</n-button>
-        <n-button size="small" @click="paste">从剪贴板读取</n-button>
-        <n-button size="small" @click="download">下载</n-button>
-      </n-space>
-    </n-layout-header>
-    <n-layout has-sider>
-      <n-layout-sider content-style="padding: 24px;">
-        <n-tree cascade checkable block-line :data="fsmGroup" :render-suffix="renderSuffix" :checked-keys="checkedKeys"
-          @update:selected-keys="onSelected" @update:checked-keys="updateCheckedKeys" default-expand-all />
-      </n-layout-sider>
-      <n-layout-content content-style="padding: 24px;">
-        <n-data-table single-column :single-line="false" :data="data" :columns="columns" v-if="checked.length > 1">
-        </n-data-table>
-        <n-space v-else>
-          <n-timeline v-if="currentFSM">
-            <n-timeline-item v-for="state in currentFSM.history" :content="state.note" :title="state.state"
-              :time="format(state.time, 'hh:mm:ss.SSS')"
-              :type="state.action ? state.processing ? 'info' : (state.err ? 'error' : 'success') : 'default'" />
-          </n-timeline>
-          <Mermaid v-if='currentFSM' />
+  <n-config-provider :theme="isDark ? darkTheme : undefined">
+    <n-layout style="height: 100vh">
+      <n-layout-header>
+        <n-space class="title-bar" align="center">
+          <n-avatar size="small" src="./logo.png">
+          </n-avatar>
+          <span class="title">{{ t.title }}</span>
+          <n-tag round :bordered="false" :type="connected ? 'success' : 'error'">
+            {{ connected ? t.connected : t.disconnected }}
+          </n-tag>
+          <n-button size="small" @click="clearAll">{{ t.clear }}</n-button>
+          <n-button size="small" @click="copy">{{ t.copy }}</n-button>
+          <n-button size="small" @click="paste">{{ t.paste }}</n-button>
+          <n-button size="small" @click="download">{{ t.download }}</n-button>
         </n-space>
-      </n-layout-content>
+      </n-layout-header>
+      <n-layout has-sider>
+        <n-layout-sider content-style="padding: 24px;">
+          <n-tree cascade checkable block-line :data="fsmGroup" :render-suffix="renderSuffix" :checked-keys="checkedKeys"
+            @update:selected-keys="onSelected" @update:checked-keys="updateCheckedKeys" default-expand-all />
+        </n-layout-sider>
+        <n-layout-content content-style="padding: 24px;">
+          <n-data-table single-column :single-line="false" :data="data" :columns="columns" v-if="checked.length > 1">
+          </n-data-table>
+          <n-space v-else>
+            <n-timeline v-if="currentFSM">
+              <n-timeline-item v-for="state in currentFSM.history" :content="state.note" :title="state.state"
+                :time="format(state.time, 'hh:mm:ss.SSS')"
+                :type="state.action ? state.processing ? 'info' : (state.err ? 'error' : 'success') : 'default'" />
+            </n-timeline>
+            <StateDiagramView
+              v-if="currentFSM"
+              :diagram="currentFSM.diagram"
+              :current-state="currentFSM.state.state"
+              :theme="isDark ? 'dark' : 'light'"
+            />
+          </n-space>
+        </n-layout-content>
+      </n-layout>
     </n-layout>
-  </n-layout>
+  </n-config-provider>
 </template>
 
 <style>
-.n-card {
-  max-width: 300px;
+html,
+body,
+#app {
+  margin: 0;
+  height: 100%;
 }
 
 .title-bar {
   padding: 10px;
-  background-color: rgb(204, 204, 204);
 }
 
 .title {
   font-size: 20px;
-}
-
-.current>rect {
-  fill: #FF0000;
-  stroke: #FFFF00;
-  stroke-width: 4px;
 }
 </style>

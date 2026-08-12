@@ -37,7 +37,8 @@ const zhSidebar = [
     label: '开始',
     items: [
       { label: '什么是 AFSM', slug: 'guide/what-is-afsm' },
-      { label: '快速上手', slug: 'guide/getting-started' }
+      { label: '快速上手', slug: 'guide/getting-started' },
+      { label: 'DevTools 扩展', slug: 'advanced/devtools', badge: '推荐' }
     ]
   },
   {
@@ -102,7 +103,8 @@ const enSidebar = [
     label: 'Getting Started',
     items: [
       { label: 'What is AFSM', slug: 'guide/what-is-afsm' },
-      { label: 'Quick Start', slug: 'guide/getting-started' }
+      { label: 'Quick Start', slug: 'guide/getting-started' },
+      { label: 'DevTools Extension', slug: 'advanced/devtools', badge: 'recommended' }
     ]
   },
   {
@@ -232,7 +234,10 @@ export default defineConfig({
     plugins: [tailwindcss(), coepForWorkers()],
     resolve: {
       // One React copy across the island graph (docs react + @astrojs/react/client).
-      dedupe: ['react', 'react-dom']
+      dedupe: ['react', 'react-dom'],
+      alias: {
+        'afsm-diagram': path.resolve(repoRoot, 'shared/afsm-diagram/src/index.ts')
+      }
     },
     server: {
       fs: {

@@ -1,18 +1,25 @@
 {
-  "description": "智能状态自动机",
-  "manifest_version": 2,
-  "name": "afsm",
-  "version": "1.0.0",
+  "manifest_version": 3,
+  "name": "AFSM",
+  "description": "Inspect AFSM state machines",
+  "version": "2.0.0",
   "author": "dexter",
   "icons": {
-    "100": "logo.png"
+    "128": "logo.png"
   },
   "background": {
-    "scripts": ["background.js"]
+    "service_worker": "background.js"
   },
-  "permissions": ["tabs", "<all_urls>", "clipboardWrite", "clipboardRead", "downloads"],
+  "permissions": ["clipboardWrite", "clipboardRead"],
+  "host_permissions": ["<all_urls>"],
   "devtools_page": "devtools-page.html",
   "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content-main.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
     {
       "matches": ["<all_urls>"],
       "js": ["content-script.js"],

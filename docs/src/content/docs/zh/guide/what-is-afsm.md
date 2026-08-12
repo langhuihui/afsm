@@ -61,7 +61,7 @@ class Service extends FSM {
 - **`FSM.stateDiagram`** — 自动生成 mermaid 状态图，可视化状态机拓扑
 - **`context`** — 在一个类里组合多个独立状态机
 - **`abortAction`** — 中断进行中的中间态
-- **DevTools 扩展** — 浏览器开发者工具里实时观察状态机
+- **DevTools 扩展** — [Chrome / Edge 面板](../advanced/devtools)，实时观察运行中的状态机
 
 ## 适用场景
 
@@ -70,4 +70,4 @@ class Service extends FSM {
 - 任何「有限状态 + 异步转换」的业务流程
 - 需要可视化与可观测性的复杂状态机
 
-下一步前往[快速上手](./getting-started)写第一个状态机。
+下一步前往[快速上手](./getting-started)写第一个状态机，或先[安装 DevTools](../advanced/devtools)。

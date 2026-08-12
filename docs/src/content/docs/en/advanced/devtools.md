@@ -1,85 +1,141 @@
 ---
 title: "DevTools Extension"
-description: "Use the AFSM Chrome DevTools extension to inspect live state machines and history."
+description: "Install the AFSM Chrome/Edge DevTools extension to inspect live state machines, diagrams, and history."
 ---
 
 
-AFSM ships with a Chrome DevTools extension to inspect running state machines live.
+AFSM ships a **Manifest V3** Chrome / Edge DevTools extension. On any page that uses AFSM, open the panel to see the FSM instance tree, a Cytoscape state diagram, and a state-change timeline.
 
-## Install
+## Quick install (recommended)
 
-1. Clone the repo:
+The repo includes a built `dist` — you usually **do not** need to compile first:
+
+1. Get the source (either):
    ```bash
    git clone https://github.com/langhuihui/afsm.git
+   cd afsm
    ```
-2. Open Chrome's extension management page `chrome://extensions/`
-3. Enable "Developer mode"
-4. Click "Load unpacked"
-5. Select the `devtools/dist` directory in the repo
+   Or download a ZIP from [GitHub](https://github.com/langhuihui/afsm) and unpack it.
+2. Open the extensions page:
+   - Chrome: `chrome://extensions/`
+   - Edge: `edge://extensions/`
+3. Turn on **Developer mode**
+4. Click **Load unpacked**
+5. Select the **`devtools/dist`** folder in the repo (not the `devtools` root)
+6. Confirm **AFSM** (v2.x) appears in the list
+
+**Reload** any already-open app tabs (or this site’s Playground) after installing so `window.__AFSM__` is injected.
+
+:::tip
+The extension is not on the Chrome Web Store — always load unpacked from this repo’s `devtools/dist`. After pulling updates, click **Reload** on the extension card and refresh the target page.
+:::
+
+## Rebuild from source
+
+If `dist` is missing/outdated, or you changed the extension:
+
+```bash
+cd afsm/devtools
+pnpm install --ignore-workspace
+# First time, if esbuild scripts are blocked:
+pnpm approve-builds esbuild --ignore-workspace
+pnpm build
+```
+
+Then load **`devtools/dist`** again (or **Reload** the existing unpacked extension).
 
 ## Usage
 
-1. Open any page that uses AFSM
-2. Open DevTools (F12)
-3. Switch to the "智能自动机" (Smart Automaton) tab
-4. The left tree lists all FSM instances (grouped by `groupName`)
-5. Select an instance:
-   - The right shows a mermaid state diagram (current state marked with 🚩)
-   - Below: a timeline of state-change history
+### 1. Open the panel
 
-## How it works
+1. Open any page that imports `afsm` (or this site’s [Playground](/en/playground))
+2. Press <kbd>F12</kbd> (or right-click → Inspect)
+3. Find the **AFSM** tab (Chinese UI may show **智能自动机**)
+4. Check the header status:
+   - **Connected** — content script ↔ panel is up
+   - **Disconnected** — refresh the page, or ensure the extension is enabled for that origin
 
-The extension's content-script injects `window.__AFSM__ = true`:
+:::note
+The panel lives in the **DevTools tab bar**, not as a browser toolbar icon. If you don’t see it, open the `»` overflow menu in the DevTools header.
+:::
 
-```js
-// content-script.js
-inject(`window.__AFSM__ = true`)
-```
+### 2. Panel layout
 
-The AFSM library checks `window.__AFSM__` at module load:
+| Area | Purpose |
+| --- | --- |
+| Left tree | FSM instances grouped by `groupName`; suffix shows current state |
+| Right (single select) | Cytoscape diagram (current / `…ing` highlighted) + timeline |
+| Right (multi-check) | Time-aligned comparison table across instances |
+| Header actions | Clear / Copy / Paste / Download history JSON |
 
-```ts
-const sendDevTools = (() => {
-  const hasDevTools = typeof window !== 'undefined' && window['__AFSM__']
-  return hasDevTools ? (name, detail) => {
-    window.dispatchEvent(new CustomEvent(name, { detail }))
-  } : () => {}
-})()
-```
+Instance `name` and optional `groupName` come from the FSM constructor — see [FSM](/en/api/fsm).
 
-Every `setState` call invokes `sendDevTools(FSM.UPDATEAFSM, { name, group, value, old, err })`, dispatching an `updateAFSM` CustomEvent. The content-script listens and forwards to the extension panel.
+### 3. Verify with this site’s Playground
 
-## Observing the Playground
+The Playground runs the real AFSM library — a good smoke test after install:
 
-The Playground on this site runs the real AFSM library. If you have the extension installed and open this page:
-
-1. DevTools → Smart Automaton tab
-2. Click "Run" in the Playground
-3. The panel shows the corresponding state machine instance and change history
+1. Install and enable the extension
+2. Open the [Playground](/en/playground)
+3. Refresh → <kbd>F12</kbd> → **AFSM** tab
+4. Click **Run** in the Playground
+5. You should see the FSM on the left; diagram + timeline update on the right
 
 :::tip
-This is AFSM's "bootstrapped" demo — the docs site itself is an AFSM application instance.
+This is AFSM’s “bootstrapped” demo — the docs site itself is an AFSM app.
 :::
+
+### 4. Inspect your own app
+
+If the page loads `afsm` and the extension injected `window.__AFSM__` at `document_start`, **no app code changes** are required — `setState` reports to the panel automatically.
+
+Tips:
+
+- `http://localhost:…` works (the extension has `<all_urls>` host permission)
+- Opening the panel late still works — a snapshot restores each instance’s **current** diagram + state
+- Use readable `name` / `groupName` so the tree stays scannable
 
 ## Features
 
 ### Timeline comparison
 
-Check multiple FSM instances; the right side switches to a data table, aligning state changes by time.
+**Check** multiple instances in the tree to switch the right pane to a time-aligned table.
 
 ### Copy / Paste / Download
 
-- Copy to clipboard: copies the history JSON
-- Paste from clipboard: replays history JSON
-- Download: saves as a file
+- **Copy** — history JSON to the clipboard  
+- **Paste** — replay history JSON (diagram may be empty if not included)  
+- **Download** — save as `afsm-*.json`
+
+### Clear
+
+Clears the panel tree/history selection only — it does **not** destroy in-page FSMs.
+
+## Troubleshooting
+
+| Symptom | What to try |
+| --- | --- |
+| No **AFSM** tab | Confirm you loaded `devtools/dist`; extension enabled; reopen DevTools; check the overflow menu |
+| Stuck **Disconnected** | Refresh the page; no site restriction on the extension; check the extension error page |
+| Empty tree | Is AFSM actually constructed on the page? Reload so injection happens **before** the library loads |
+| Late-open panel has no full history | Expected — snapshot is current state only; timeline starts after connect |
+| Weird after upgrade | Extension **Reload** → hard-refresh the page; or remove and load `dist` again |
+| Edge / other Chromium | Supported — use that browser’s extensions page |
+
+## How it works (short)
+
+1. A MAIN-world content script sets `window.__AFSM__ = true` at `document_start`
+2. AFSM checks that flag on every update and dispatches `updateAFSM`
+3. An isolated-world content script forwards events to the panel
+4. On connect, the panel requests a dump; the page handles `__AFSM_DUMP__` and replays the last diagram + state per instance
 
 ## Limitations
 
-- Uses Manifest V2
-- Uses an older mermaid (9.x), compatible with the library's `stateDiagram` output
-- Content-script injects at `document_start` so `window.__AFSM__` is ready before AFSM loads
+- Manifest V3; load unpacked from `devtools/dist` (not the Web Store)
+- Late-open snapshot does not include history from before the panel opened
+- History is capped to keep long-running pages from blowing up the panel
 
 ## Next steps
 
-- [Playground Internals](./playground) — how this site's Playground is built
-- [Visualizing the Diagram](../guide/visualization) — mermaid output format
+- [Visualizing the Diagram](/en/guide/visualization) — `stateDiagram` text format
+- [Playground](/en/playground) — run examples next to the extension
+- [Playground Internals](./playground-internals) — how the docs site renders the same graphs

@@ -82,18 +82,17 @@ function run() {
 
 `log` is injected by the Playground and routes output to the `ConsoleOut` panel (without replacing the global `console`).
 
-## Mermaid rendering
+## State diagram rendering
 
-`MermaidView.vue` dynamically imports mermaid and initializes/renders inside `onMounted`:
+`StateDiagramView` uses the shared `afsm-diagram` package (Cytoscape) to render AFSM `stateDiagram` edge lines:
 
 ```ts
-const mermaid = (await import('mermaid')).default
-await mermaid.initialize({ startOnLoad: false, securityLevel: 'loose' })
-const { svg } = await mermaid.render(id, source)
-containerRef.value.innerHTML = svg
+import { createDiagram, syncDiagram } from 'afsm-diagram'
+const cy = createDiagram(container, 'docs')
+syncDiagram(cy, diagram, currentState, sourceKey)
 ```
 
-The current state is marked via a mermaid `note left of <state> : 🚩` line (only added when the state is a real node in the diagram).
+The current state is highlighted with `.current` / `.processing` node classes (no mermaid note markers). The same renderer powers the DevTools panel.
 
 ## Cleanup
 
