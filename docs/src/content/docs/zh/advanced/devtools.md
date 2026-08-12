@@ -1,5 +1,6 @@
 ---
 title: "DevTools 扩展"
+description: "安装并使用 AFSM Chrome DevTools 扩展，实时观察运行中的状态机与历史。"
 ---
 
 

@@ -1,5 +1,6 @@
 ---
 title: "@ChangeState"
+description: "@ChangeState decorator API: from/to, ChangeOption, intermediate states, and sync mode."
 ---
 
 

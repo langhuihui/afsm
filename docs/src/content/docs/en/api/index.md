@@ -1,5 +1,6 @@
 ---
 title: "API Reference"
+description: "AFSM public API overview: FSM, decorators, MiddleState, FSMError, types, and helpers."
 ---
 
 

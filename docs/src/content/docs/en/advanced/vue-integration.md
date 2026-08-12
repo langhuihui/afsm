@@ -1,5 +1,6 @@
 ---
 title: "Vue Integration"
+description: "Use Vue 3 reactive or ref subscriptions with AFSM to drive reactive UI."
 ---
 
 

@@ -1,5 +1,6 @@
 ---
 title: "@ChangeState"
+description: "@ChangeState 装饰器 API：from/to、ChangeOption、中间态与同步模式配置。"
 ---
 
 

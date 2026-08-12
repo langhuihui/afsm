@@ -1,5 +1,6 @@
 ---
 title: "Sync Mode"
+description: "With sync: true, sync methods return values directly instead of always wrapping in a Promise."
 ---
 
 

@@ -1,5 +1,6 @@
 ---
 title: "tryChangeState"
+description: "tryChangeState 工具函数说明：当前实现局限与推荐的装饰器用法。"
 ---
 
 

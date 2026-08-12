@@ -1,5 +1,6 @@
 ---
 title: "Playground 工作原理"
+description: "本站 Playground 如何运行 AFSM 示例：编辑、执行与状态图联动原理。"
 ---
 
 

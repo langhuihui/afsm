@@ -1,5 +1,6 @@
 ---
 title: "Changing State: @ChangeState"
+description: "@ChangeState wraps an async method as a state transition, handling intermediate states, success, and rollback."
 ---
 
 

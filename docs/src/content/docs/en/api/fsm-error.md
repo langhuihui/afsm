@@ -1,5 +1,6 @@
 ---
 title: "FSMError"
+description: "FSMError is the error type AFSM throws when a state transition fails, with contextual details."
 ---
 
 

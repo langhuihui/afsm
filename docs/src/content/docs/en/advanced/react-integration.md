@@ -1,5 +1,6 @@
 ---
 title: "React Integration"
+description: "Subscribe to FSM.STATECHANGED in React with useSyncExternalStore or useEffect."
 ---
 
 

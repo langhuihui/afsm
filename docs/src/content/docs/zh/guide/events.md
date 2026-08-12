@@ -1,5 +1,6 @@
 ---
 title: "事件系统"
+description: "AFSM 基于 eventemitter3 分发 STATECHANGED 等事件，便于订阅状态变化与驱动 UI。"
 ---
 
 

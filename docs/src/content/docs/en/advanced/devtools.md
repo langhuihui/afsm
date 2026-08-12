@@ -1,5 +1,6 @@
 ---
 title: "DevTools Extension"
+description: "Use the AFSM Chrome DevTools extension to inspect live state machines and history."
 ---
 
 

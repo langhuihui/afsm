@@ -1,5 +1,6 @@
 ---
 title: "MiddleState"
+description: "MiddleState represents an in-flight transition with oldState, action, and newState."
 ---
 
 

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://afsm.langhuihui.com/sitemap-index.xml

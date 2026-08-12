@@ -1,5 +1,6 @@
 ---
 title: "FSM 类"
+description: "FSM 基类 API：当前状态、事件、stateDiagram、以及继承自 EventEmitter 的能力。"
 ---
 
 

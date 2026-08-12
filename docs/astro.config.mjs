@@ -31,67 +31,68 @@ function coepForWorkers() {
 }
 
 // Starlight sidebar definitions — shared structure, locale-specific labels.
+// Slugs omit the locale prefix; Starlight adds /zh or /en automatically.
 const zhSidebar = [
   {
     label: '开始',
     items: [
-      { label: '什么是 AFSM', slug: 'zh/guide/what-is-afsm' },
-      { label: '快速上手', slug: 'zh/guide/getting-started' }
+      { label: '什么是 AFSM', slug: 'guide/what-is-afsm' },
+      { label: '快速上手', slug: 'guide/getting-started' }
     ]
   },
   {
     label: '核心概念',
     items: [
-      { label: '核心概念', slug: 'zh/guide/core-concepts' },
-      { label: '状态变更 @ChangeState', slug: 'zh/guide/change-state' },
-      { label: '其他装饰器', slug: 'zh/guide/decorators' },
-      { label: '事件系统', slug: 'zh/guide/events' },
-      { label: '错误处理', slug: 'zh/guide/error-handling' },
-      { label: '可视化状态图', slug: 'zh/guide/visualization' }
+      { label: '核心概念', slug: 'guide/core-concepts' },
+      { label: '状态变更 @ChangeState', slug: 'guide/change-state' },
+      { label: '其他装饰器', slug: 'guide/decorators' },
+      { label: '事件系统', slug: 'guide/events' },
+      { label: '错误处理', slug: 'guide/error-handling' },
+      { label: '可视化状态图', slug: 'guide/visualization' }
     ]
   },
   {
     label: 'API 参考',
     items: [
-      { label: '总览', slug: 'zh/api/' },
-      { label: 'FSM 类', slug: 'zh/api/fsm' },
-      { label: '@ChangeState', slug: 'zh/api/change-state' },
-      { label: '@ActionState', slug: 'zh/api/action-state' },
-      { label: '@Includes / @Excludes', slug: 'zh/api/includes-excludes' },
-      { label: 'MiddleState', slug: 'zh/api/middle-state' },
-      { label: 'FSMError', slug: 'zh/api/fsm-error' },
-      { label: 'tryChangeState', slug: 'zh/api/try-change-state' },
-      { label: '类型定义', slug: 'zh/api/types' }
+      { label: '总览', slug: 'api' },
+      { label: 'FSM 类', slug: 'api/fsm' },
+      { label: '@ChangeState', slug: 'api/change-state' },
+      { label: '@ActionState', slug: 'api/action-state' },
+      { label: '@Includes / @Excludes', slug: 'api/includes-excludes' },
+      { label: 'MiddleState', slug: 'api/middle-state' },
+      { label: 'FSMError', slug: 'api/fsm-error' },
+      { label: 'tryChangeState', slug: 'api/try-change-state' },
+      { label: '类型定义', slug: 'api/types' }
     ]
   },
   {
     label: '示例',
     items: [
-      { label: '总览', slug: 'zh/examples/' },
-      { label: '连接管理', slug: 'zh/examples/connection' },
-      { label: '定时器 setTimeout', slug: 'zh/examples/settimeout' },
-      { label: '定时器 setInterval', slug: 'zh/examples/setinterval' },
-      { label: '红绿灯', slug: 'zh/examples/traffic-light' },
-      { label: '数据请求', slug: 'zh/examples/data-fetch' }
+      { label: '总览', slug: 'examples' },
+      { label: '连接管理', slug: 'examples/connection' },
+      { label: '定时器 setTimeout', slug: 'examples/settimeout' },
+      { label: '定时器 setInterval', slug: 'examples/setinterval' },
+      { label: '红绿灯', slug: 'examples/traffic-light' },
+      { label: '数据请求', slug: 'examples/data-fetch' }
     ]
   },
   {
     label: '进阶',
     items: [
-      { label: '组合式状态机', slug: 'zh/advanced/composition' },
-      { label: '中断与 abort', slug: 'zh/advanced/abort' },
-      { label: '同步模式', slug: 'zh/advanced/sync-mode' },
-      { label: '继承', slug: 'zh/advanced/inheritance' },
-      { label: 'DevTools 扩展', slug: 'zh/advanced/devtools' },
-      { label: 'React 集成', slug: 'zh/advanced/react-integration' },
-      { label: 'Vue 集成', slug: 'zh/advanced/vue-integration' },
-      { label: 'Playground 工作原理', slug: 'zh/advanced/playground-internals' }
+      { label: '组合式状态机', slug: 'advanced/composition' },
+      { label: '中断与 abort', slug: 'advanced/abort' },
+      { label: '同步模式', slug: 'advanced/sync-mode' },
+      { label: '继承', slug: 'advanced/inheritance' },
+      { label: 'DevTools 扩展', slug: 'advanced/devtools' },
+      { label: 'React 集成', slug: 'advanced/react-integration' },
+      { label: 'Vue 集成', slug: 'advanced/vue-integration' },
+      { label: 'Playground 工作原理', slug: 'advanced/playground-internals' }
     ]
   },
   {
     label: 'Playground',
     items: [
-      { label: '在线 Playground', slug: 'zh/playground', badge: 'new' }
+      { label: '在线 Playground', slug: 'playground', badge: 'new' }
     ]
   }
 ];
@@ -100,69 +101,73 @@ const enSidebar = [
   {
     label: 'Getting Started',
     items: [
-      { label: 'What is AFSM', slug: 'en/guide/what-is-afsm' },
-      { label: 'Quick Start', slug: 'en/guide/getting-started' }
+      { label: 'What is AFSM', slug: 'guide/what-is-afsm' },
+      { label: 'Quick Start', slug: 'guide/getting-started' }
     ]
   },
   {
     label: 'Core Concepts',
     items: [
-      { label: 'Core Concepts', slug: 'en/guide/core-concepts' },
-      { label: 'Changing State: @ChangeState', slug: 'en/guide/change-state' },
-      { label: 'Other Decorators', slug: 'en/guide/decorators' },
-      { label: 'Event System', slug: 'en/guide/events' },
-      { label: 'Error Handling', slug: 'en/guide/error-handling' },
-      { label: 'Visualizing the Diagram', slug: 'en/guide/visualization' }
+      { label: 'Core Concepts', slug: 'guide/core-concepts' },
+      { label: 'Changing State: @ChangeState', slug: 'guide/change-state' },
+      { label: 'Other Decorators', slug: 'guide/decorators' },
+      { label: 'Event System', slug: 'guide/events' },
+      { label: 'Error Handling', slug: 'guide/error-handling' },
+      { label: 'Visualizing the Diagram', slug: 'guide/visualization' }
     ]
   },
   {
     label: 'API Reference',
     items: [
-      { label: 'Overview', slug: 'en/api/' },
-      { label: 'FSM Class', slug: 'en/api/fsm' },
-      { label: '@ChangeState', slug: 'en/api/change-state' },
-      { label: '@ActionState', slug: 'en/api/action-state' },
-      { label: '@Includes / @Excludes', slug: 'en/api/includes-excludes' },
-      { label: 'MiddleState', slug: 'en/api/middle-state' },
-      { label: 'FSMError', slug: 'en/api/fsm-error' },
-      { label: 'tryChangeState', slug: 'en/api/try-change-state' },
-      { label: 'Types', slug: 'en/api/types' }
+      { label: 'Overview', slug: 'api' },
+      { label: 'FSM Class', slug: 'api/fsm' },
+      { label: '@ChangeState', slug: 'api/change-state' },
+      { label: '@ActionState', slug: 'api/action-state' },
+      { label: '@Includes / @Excludes', slug: 'api/includes-excludes' },
+      { label: 'MiddleState', slug: 'api/middle-state' },
+      { label: 'FSMError', slug: 'api/fsm-error' },
+      { label: 'tryChangeState', slug: 'api/try-change-state' },
+      { label: 'Types', slug: 'api/types' }
     ]
   },
   {
     label: 'Examples',
     items: [
-      { label: 'Overview', slug: 'en/examples/' },
-      { label: 'Connection', slug: 'en/examples/connection' },
-      { label: 'setTimeout Timer', slug: 'en/examples/settimeout' },
-      { label: 'setInterval Timer', slug: 'en/examples/setinterval' },
-      { label: 'Traffic Light', slug: 'en/examples/traffic-light' },
-      { label: 'Data Fetch', slug: 'en/examples/data-fetch' }
+      { label: 'Overview', slug: 'examples' },
+      { label: 'Connection', slug: 'examples/connection' },
+      { label: 'setTimeout Timer', slug: 'examples/settimeout' },
+      { label: 'setInterval Timer', slug: 'examples/setinterval' },
+      { label: 'Traffic Light', slug: 'examples/traffic-light' },
+      { label: 'Data Fetch', slug: 'examples/data-fetch' }
     ]
   },
   {
     label: 'Advanced',
     items: [
-      { label: 'Composing FSMs', slug: 'en/advanced/composition' },
-      { label: 'Abort & Interruption', slug: 'en/advanced/abort' },
-      { label: 'Sync Mode', slug: 'en/advanced/sync-mode' },
-      { label: 'Inheritance', slug: 'en/advanced/inheritance' },
-      { label: 'DevTools Extension', slug: 'en/advanced/devtools' },
-      { label: 'React Integration', slug: 'en/advanced/react-integration' },
-      { label: 'Vue Integration', slug: 'en/advanced/vue-integration' },
-      { label: 'Playground Internals', slug: 'en/advanced/playground-internals' }
+      { label: 'Composing FSMs', slug: 'advanced/composition' },
+      { label: 'Abort & Interruption', slug: 'advanced/abort' },
+      { label: 'Sync Mode', slug: 'advanced/sync-mode' },
+      { label: 'Inheritance', slug: 'advanced/inheritance' },
+      { label: 'DevTools Extension', slug: 'advanced/devtools' },
+      { label: 'React Integration', slug: 'advanced/react-integration' },
+      { label: 'Vue Integration', slug: 'advanced/vue-integration' },
+      { label: 'Playground Internals', slug: 'advanced/playground-internals' }
     ]
   },
   {
     label: 'Playground',
     items: [
-      { label: 'Online Playground', slug: 'en/playground', badge: 'new' }
+      { label: 'Online Playground', slug: 'playground', badge: 'new' }
     ]
   }
 ];
 
 export default defineConfig({
-  site: 'https://afsm.dev',
+  site: 'https://afsm.langhuihui.com',
+  // Keep /zh/... URLs; Starlight sets redirectToDefaultLocale: false, so map / explicitly.
+  redirects: {
+    '/': '/zh/'
+  },
   devToolbar: {
     enabled: false
   },
@@ -173,10 +178,27 @@ export default defineConfig({
         src: './src/assets/logo.png',
         replacesTitle: false
       },
-      description: 'Automatic Finite State Machine',
+      description:
+        'AFSM — Automatic Finite State Machine. Decorator-driven async state machines for TypeScript.',
       social: {
         github: 'https://github.com/langhuihui/afsm'
       },
+      head: [
+        {
+          tag: 'meta',
+          attrs: {
+            property: 'og:image',
+            content: 'https://afsm.langhuihui.com/home.png'
+          }
+        },
+        {
+          tag: 'meta',
+          attrs: {
+            name: 'twitter:image',
+            content: 'https://afsm.langhuihui.com/home.png'
+          }
+        }
+      ],
       customCss: ['./src/styles/dark-tech.css', './src/styles/global.css'],
       components: {
         PageFrame: './src/components/overrides/PageFrame.astro',
@@ -185,10 +207,13 @@ export default defineConfig({
         PageTitle: './src/components/overrides/PageTitle.astro',
         ThemeSelect: './src/components/overrides/ThemeSelect.astro'
       },
+      defaultLocale: 'zh',
       locales: {
-        root: {
+        // lang must match the locale key so Starlight's generated Astro i18n
+        // defaultLocale aligns with the locale path (keeps URLs as /zh/...).
+        zh: {
           label: '简体中文',
-          lang: 'zh-CN',
+          lang: 'zh',
           sidebar: zhSidebar
         },
         en: {
@@ -197,10 +222,7 @@ export default defineConfig({
           sidebar: enSidebar
         }
       },
-      editLink: {
-        baseUrl: 'https://github.com/langhuihui/afsm/edit/main/docs'
-      },
-      lastUpdated: true,
+      tableOfContents: false,
       pagination: true
     }),
     mdx(),

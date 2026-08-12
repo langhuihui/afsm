@@ -1,5 +1,6 @@
 ---
 title: "类型定义"
+description: "AFSM TypeScript 类型定义：State、ChangeOption 及相关公开类型。"
 ---
 
 

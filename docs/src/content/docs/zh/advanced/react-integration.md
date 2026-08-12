@@ -1,5 +1,6 @@
 ---
 title: "React 集成"
+description: "在 React 中用 useSyncExternalStore 或 useEffect 订阅 FSM.STATECHANGED。"
 ---
 
 

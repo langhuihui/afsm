@@ -1,5 +1,6 @@
 ---
 title: "Vue 集成"
+description: "在 Vue 3 中用 reactive 或 ref 订阅 AFSM 状态，驱动响应式 UI。"
 ---
 
 

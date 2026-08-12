@@ -1,5 +1,6 @@
 ---
 title: "Event System"
+description: "AFSM extends eventemitter3 to emit STATECHANGED and related events for UI and logging."
 ---
 
 

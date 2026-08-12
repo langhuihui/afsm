@@ -1,5 +1,6 @@
 ---
 title: "组合式状态机"
+description: "在同一类中通过 opt.context 组合多个独立状态机，隔离命名空间与迁移。"
 ---
 
 

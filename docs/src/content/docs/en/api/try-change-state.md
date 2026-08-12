@@ -1,5 +1,6 @@
 ---
 title: "tryChangeState"
+description: "Notes on tryChangeState: current implementation limits and the recommended decorator approach."
 ---
 
 

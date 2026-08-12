@@ -1,5 +1,6 @@
 ---
 title: "同步模式"
+description: "开启 sync: true 后，同步方法可直接返回同步值，而不总是包装为 Promise。"
 ---
 
 

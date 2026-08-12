@@ -1,5 +1,6 @@
 ---
 title: "FSM class"
+description: "FSM base class API: current state, events, stateDiagram, and EventEmitter capabilities."
 ---
 
 

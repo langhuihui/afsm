@@ -1,5 +1,6 @@
 ---
 title: "Core Concepts"
+description: "Core AFSM concepts: the FSM base class, states and MiddleState, decorator-driven transitions, and events."
 ---
 
 

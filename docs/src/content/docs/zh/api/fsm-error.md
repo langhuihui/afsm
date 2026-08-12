@@ -1,5 +1,6 @@
 ---
 title: "FSMError"
+description: "FSMError 是 AFSM 抛出的错误类型，携带状态迁移失败时的上下文信息。"
 ---
 
 

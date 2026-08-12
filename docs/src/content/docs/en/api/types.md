@@ -1,5 +1,6 @@
 ---
 title: "Types"
+description: "AFSM TypeScript types: State, ChangeOption, and other public type definitions."
 ---
 
 

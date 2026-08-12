@@ -1,5 +1,6 @@
 ---
 title: "What is AFSM"
+description: "AFSM is a TypeScript decorator library for automatically managing async state machines with intermediate, success, and failure states."
 ---
 
 

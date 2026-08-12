@@ -1,5 +1,6 @@
 ---
 title: "@ChangeState 状态变更"
+description: "@ChangeState 把异步方法包装成状态迁移动作，自动处理中间态、成功目标态与失败回滚。"
 ---
 
 

@@ -1,5 +1,6 @@
 ---
 title: "Playground Internals"
+description: "How this site’s Playground runs AFSM examples: edit, execute, and sync the state diagram."
 ---
 
 

@@ -1,5 +1,6 @@
 ---
 title: "其他装饰器"
+description: "除 @ChangeState 外，学习 @ActionState、@Includes、@Excludes 如何约束与包装状态相关方法。"
 ---
 
 

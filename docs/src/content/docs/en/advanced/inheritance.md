@@ -1,5 +1,6 @@
 ---
 title: "Inheritance"
+description: "AFSM inheritance merges parent state diagrams and decorator metadata into subclasses."
 ---
 
 

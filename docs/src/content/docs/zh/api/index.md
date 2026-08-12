@@ -1,5 +1,6 @@
 ---
 title: "API 参考"
+description: "AFSM 公开 API 总览：FSM、装饰器、MiddleState、FSMError、类型与工具函数。"
 ---
 
 

@@ -1,5 +1,6 @@
 ---
 title: "什么是 AFSM"
+description: "AFSM 是 TypeScript 装饰器库，用 @ChangeState 等装饰器自动管理异步状态机的中间态、成功与失败迁移。"
 ---
 
 

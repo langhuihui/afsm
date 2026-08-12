@@ -1,5 +1,6 @@
 ---
 title: "中断与 abort"
+description: "如何中断进行中的 MiddleState，取消未完成的异步迁移动作。"
 ---
 
 

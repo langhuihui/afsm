@@ -1,5 +1,6 @@
 ---
 title: "Abort & Interruption"
+description: "Abort an in-flight MiddleState and cancel an unfinished async transition."
 ---
 
 

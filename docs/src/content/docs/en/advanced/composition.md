@@ -1,5 +1,6 @@
 ---
 title: "Composing FSMs"
+description: "Compose multiple independent state machines in one class with opt.context isolation."
 ---
 
 

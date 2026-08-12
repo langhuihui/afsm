@@ -1,5 +1,6 @@
 ---
 title: "MiddleState"
+description: "MiddleState 表示迁移进行中的中间态，包含 oldState、action 与 newState。"
 ---
 
 
