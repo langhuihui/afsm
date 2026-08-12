@@ -1,4 +1,5 @@
 {
+  "installCommand": "corepack enable && pnpm install --frozen-lockfile",
   "headers": [
     {
       "source": "/playground/:path*",

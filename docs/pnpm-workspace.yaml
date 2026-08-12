@@ -1,6 +1,7 @@
 packages:
   - '.'
 
-onlyBuiltDependencies:
-  - esbuild
-  - sharp
+# pnpm 11+ (pinned via packageManager / Corepack on Vercel)
+allowBuilds:
+  esbuild: true
+  sharp: true
