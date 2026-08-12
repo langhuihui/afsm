@@ -103,6 +103,109 @@ log('info', 'starting traffic light');
 fsm.init().then(() => fsm.go());
 `;
 
+/** Skip string / template literals while scanning for matching braces. */
+function skipString(src: string, i: number): number {
+  const q = src[i];
+  i++;
+  while (i < src.length) {
+    if (src[i] === '\\') {
+      i += 2;
+      continue;
+    }
+    if (src[i] === q) return i + 1;
+    // template literals: skip ${...} with nested braces
+    if (q === '`' && src[i] === '$' && src[i + 1] === '{') {
+      i += 2;
+      let depth = 1;
+      while (i < src.length && depth > 0) {
+        if (src[i] === '"' || src[i] === "'" || src[i] === '`') {
+          i = skipString(src, i);
+          continue;
+        }
+        if (src[i] === '{') depth++;
+        else if (src[i] === '}') depth--;
+        i++;
+      }
+      continue;
+    }
+    i++;
+  }
+  return i;
+}
+
+/** Extract `{ ... }` body of `name(...) { ... }` inside an object literal. */
+function extractMethodBody(objectSrc: string, name: string): string | null {
+  const re = new RegExp(`\\b${name}\\s*\\([^)]*\\)\\s*\\{`);
+  const m = objectSrc.match(re);
+  if (!m || m.index === undefined) return null;
+  const start = m.index + m[0].length;
+  let depth = 1;
+  let i = start;
+  while (i < objectSrc.length && depth > 0) {
+    const c = objectSrc[i];
+    if (c === '"' || c === "'" || c === '`') {
+      i = skipString(objectSrc, i);
+      continue;
+    }
+    if (c === '{') depth++;
+    else if (c === '}') depth--;
+    i++;
+  }
+  return objectSrc.slice(start, i - 1).trim();
+}
+
+/**
+ * Convert a preset's `?raw` source into a WebContainer-runnable main.ts:
+ * strip registerExample boilerplate, keep the FSM class, wire bridge + create/run.
+ */
+export function exampleToMainTs(
+  source: string,
+  params: Record<string, unknown> = {}
+): string {
+  const trimmed = source.replace(/\nexport\s*\{\s*\};?\s*$/, '').trimEnd();
+  const regIdx = trimmed.search(/\bregisterExample\s*\(/);
+  const head = (regIdx >= 0 ? trimmed.slice(0, regIdx) : trimmed)
+    .replace(/import\s*\{[^}]*\bregisterExample\b[^}]*\}\s*from\s*['"][^'"]+['"];?\s*/g, '')
+    .replace(/import\s+source\s+from\s*['"][^'"]+['"];?\s*/g, '')
+    .trim();
+
+  let main = head;
+  if (!/from\s*['"]\.\/bridge\.js['"]/.test(main)) {
+    if (/^import\s/m.test(main)) {
+      main = main.replace(
+        /((?:^import\s[^;]+;\s*\n?)+)/m,
+        (block) => `${block.replace(/\n?$/, '\n')}import { attachFSM, log } from './bridge.js';\n`
+      );
+    } else {
+      main = `import { attachFSM, log } from './bridge.js';\n\n${main}`;
+    }
+  }
+
+  const className = head.match(/\bclass\s+(\w+)/)?.[1];
+  const regBlock = regIdx >= 0 ? trimmed.slice(regIdx) : '';
+  const createBody = regBlock ? extractMethodBody(regBlock, 'create') : null;
+  const runBody = regBlock ? extractMethodBody(regBlock, 'run') : null;
+
+  main += '\n\n';
+  main += `const params = ${JSON.stringify(params, null, 2)} as Record<string, any>;\n\n`;
+
+  if (createBody) {
+    main += `const fsm = (() => {\n${createBody}\n})();\n`;
+  } else if (className) {
+    main += `const fsm = new ${className}('demo');\n`;
+  } else {
+    return defaultMainTs;
+  }
+
+  main += 'attachFSM(fsm);\n';
+
+  if (runBody) {
+    main += `\n((fsm: any, params: Record<string, any>, log: typeof import('./bridge.js').log) => {\n${runBody}\n})(fsm, params, log);\n`;
+  }
+
+  return main;
+}
+
 /** The vite config for the WebContainer project. */
 const viteConfig = `import { defineConfig } from 'vite';
 

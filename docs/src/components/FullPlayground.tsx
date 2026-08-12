@@ -6,7 +6,7 @@ import ConsoleOut from './ConsoleOut';
 import { useLang, tt } from './i18n';
 import { getExample, listExamples } from '../examples';
 import { getWebContainer, isWebContainerSupported } from '../scripts/webcontainer';
-import { buildVirtualFs, defaultMainTs } from '../scripts/playground-template';
+import { buildVirtualFs, defaultMainTs, exampleToMainTs } from '../scripts/playground-template';
 import { configureMonaco, monacoEditorOptions } from '../scripts/monaco-config';
 // Side-effect: sets MonacoEnvironment BEFORE monaco-editor is imported below.
 import '../scripts/monaco-env';
@@ -19,11 +19,19 @@ interface BootState {
   message?: string;
 }
 
+function mainTsForExample(key: string): string {
+  const ex = getExample(key);
+  if (!ex?.source) return defaultMainTs;
+  const params: Record<string, unknown> = {};
+  for (const p of ex.params) params[p.key] = p.default;
+  return exampleToMainTs(ex.source, params);
+}
+
 export default function FullPlayground() {
   const lang = useLang();
-  const [editorValue, setEditorValue] = useState(defaultMainTs);
   const [examples] = useState(() => listExamples());
   const [currentExampleKey, setCurrentExampleKey] = useState('traffic-light');
+  const [editorValue, setEditorValue] = useState(() => mainTsForExample('traffic-light'));
   const [bootState, setBootState] = useState<BootState>({ status: 'idle' });
   const [history, setHistory] = useState<TimelineItem[]>([]);
   const [consoleLog, setConsoleLog] = useState<ConsoleLine[]>([]);
@@ -163,13 +171,9 @@ export default function FullPlayground() {
 
   function loadExample(key: string) {
     setCurrentExampleKey(key);
-    const ex = getExample(key);
-    if (ex && ex.source) {
-      // Strip the `registerExample` boilerplate — load the FSM class source only
-      // For simplicity, load the defaultMainTs template.
-      setEditorValue(defaultMainTs);
-      if (editorRef.current) editorRef.current.setValue(defaultMainTs);
-    }
+    const code = mainTsForExample(key);
+    setEditorValue(code);
+    if (editorRef.current) editorRef.current.setValue(code);
   }
 
   function openInStackBlitz() {
