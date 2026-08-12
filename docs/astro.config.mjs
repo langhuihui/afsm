@@ -155,7 +155,9 @@ export default defineConfig({
         Search: './src/components/overrides/SearchPlaceholder.astro',
         ContentPanel: './src/components/overrides/ContentPanel.astro',
         PageTitle: './src/components/overrides/PageTitle.astro',
-        ThemeSelect: './src/components/overrides/ThemeSelect.astro'
+        ThemeSelect: './src/components/overrides/ThemeSelect.astro',
+        // Force dark always — EC code blocks follow data-theme, not our page CSS.
+        ThemeProvider: './src/components/overrides/ThemeProvider.astro'
       },
       defaultLocale: 'zh',
       locales: {

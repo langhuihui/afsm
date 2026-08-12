@@ -1,0 +1,22 @@
+---
+// AFSM docs are dark-only. Force data-theme=dark so Expressive Code (and any
+// other Starlight theme-aware CSS) never switches to light code-block colors
+// when the OS preference or a leftover starlight-theme localStorage is light.
+---
+
+{/* Inlined to avoid FOUC — must run before first paint. */}
+<script is:inline>
+	window.StarlightThemeProvider = (() => {
+		document.documentElement.dataset.theme = 'dark';
+		try {
+			localStorage.setItem('starlight-theme', 'dark');
+		} catch {
+			/* ignore private-mode / blocked storage */
+		}
+		return {
+			updatePickers() {
+				/* ThemeSelect is removed; no-op stub for Starlight globals. */
+			},
+		};
+	})();
+</script>

@@ -68,6 +68,10 @@
   --sl-color-gray-4: #4a4a5c;
   --sl-color-gray-5: #2a2a3a;
   --sl-color-gray-6: #1a1a26;
+  /* Used by Expressive Code frames (`--ec-frm-edBg` / `--ec-frm-trmBg`).
+     Starlight only defines gray-7 in light mode (near-white); without this,
+     framed code blocks flash white when data-theme is light. */
+  --sl-color-gray-7: var(--afsm-bg-panel);
 
   --sl-color-hairline: var(--afsm-border);
   --sl-color-hairline-shade: var(--afsm-border);
@@ -156,6 +160,34 @@ code {
 .sl-markdown-content pre:not(:where(.not-content *)) code {
   background: transparent;
   color: #e4e4ef;
+}
+
+/* Expressive Code frames live under `.not-content`, so the rule above skips
+   them. Pin EC theme vars to the dark-tech palette for every data-theme so
+   framed/terminal blocks never fall back to light (#fbfbfb) backgrounds. */
+.expressive-code,
+:root .expressive-code,
+:root[data-theme='light'] .expressive-code,
+:root[data-theme='dark'] .expressive-code {
+  --ec-codeBg: var(--afsm-bg-panel) !important;
+  --ec-codeFg: #e4e4ef !important;
+  --ec-frm-edBg: var(--afsm-bg-panel) !important;
+  --ec-frm-trmBg: var(--afsm-bg-panel) !important;
+  --ec-frm-edActTabBg: var(--afsm-bg-elevated) !important;
+  --ec-frm-edTabBarBg: var(--afsm-bg-nav) !important;
+  --ec-frm-trmTtbBg: var(--afsm-bg-nav) !important;
+  --ec-brdCol: var(--afsm-border) !important;
+}
+.expressive-code .frame pre,
+.expressive-code pre {
+  background: var(--afsm-bg-panel) !important;
+}
+/* Keep dark-theme token colors even if html briefly has data-theme=light. */
+:root[data-theme='light'] .expressive-code .ec-line :where(span[style^='--']:not([class])) {
+  color: var(--0, inherit);
+  font-style: var(--0fs, inherit);
+  font-weight: var(--0fw, inherit);
+  text-decoration: var(--0td, inherit);
 }
 
 /* Inline code — scoped to markdown content (excludes islands) */
