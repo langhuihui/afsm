@@ -30,136 +30,84 @@ function coepForWorkers() {
   };
 }
 
-// Starlight sidebar definitions — shared structure, locale-specific labels.
-// Slugs omit the locale prefix; Starlight adds /zh or /en automatically.
-const zhSidebar = [
-  {
-    label: '开始',
-    items: [
-      { label: '什么是 AFSM', slug: 'guide/what-is-afsm' },
-      { label: '快速上手', slug: 'guide/getting-started' },
-      { label: 'DevTools 扩展', slug: 'advanced/devtools', badge: '推荐' }
-    ]
-  },
-  {
-    label: '核心概念',
-    items: [
-      { label: '核心概念', slug: 'guide/core-concepts' },
-      { label: '状态变更 @ChangeState', slug: 'guide/change-state' },
-      { label: '其他装饰器', slug: 'guide/decorators' },
-      { label: '事件系统', slug: 'guide/events' },
-      { label: '错误处理', slug: 'guide/error-handling' },
-      { label: '可视化状态图', slug: 'guide/visualization' }
-    ]
-  },
-  {
-    label: 'API 参考',
-    items: [
-      { label: '总览', slug: 'api' },
-      { label: 'FSM 类', slug: 'api/fsm' },
-      { label: '@ChangeState', slug: 'api/change-state' },
-      { label: '@ActionState', slug: 'api/action-state' },
-      { label: '@Includes / @Excludes', slug: 'api/includes-excludes' },
-      { label: 'MiddleState', slug: 'api/middle-state' },
-      { label: 'FSMError', slug: 'api/fsm-error' },
-      { label: 'tryChangeState', slug: 'api/try-change-state' },
-      { label: '类型定义', slug: 'api/types' }
-    ]
-  },
-  {
-    label: '示例',
-    items: [
-      { label: '总览', slug: 'examples' },
-      { label: '连接管理', slug: 'examples/connection' },
-      { label: '定时器 setTimeout', slug: 'examples/settimeout' },
-      { label: '定时器 setInterval', slug: 'examples/setinterval' },
-      { label: '红绿灯', slug: 'examples/traffic-light' },
-      { label: '数据请求', slug: 'examples/data-fetch' }
-    ]
-  },
-  {
-    label: '进阶',
-    items: [
-      { label: '组合式状态机', slug: 'advanced/composition' },
-      { label: '中断与 abort', slug: 'advanced/abort' },
-      { label: '同步模式', slug: 'advanced/sync-mode' },
-      { label: '继承', slug: 'advanced/inheritance' },
-      { label: 'DevTools 扩展', slug: 'advanced/devtools' },
-      { label: 'React 集成', slug: 'advanced/react-integration' },
-      { label: 'Vue 集成', slug: 'advanced/vue-integration' },
-      { label: 'Playground 工作原理', slug: 'advanced/playground-internals' }
-    ]
-  },
-  {
-    label: 'Playground',
-    items: [
-      { label: '在线 Playground', slug: 'playground', badge: 'new' }
-    ]
-  }
-];
-
-const enSidebar = [
+// Starlight only reads top-level `sidebar` (locale.sidebar is stripped by Zod).
+// Use `translations` for zh/en labels. Slugs omit the locale prefix.
+const sidebar = [
   {
     label: 'Getting Started',
+    translations: { zh: '开始' },
     items: [
-      { label: 'What is AFSM', slug: 'guide/what-is-afsm' },
-      { label: 'Quick Start', slug: 'guide/getting-started' },
-      { label: 'DevTools Extension', slug: 'advanced/devtools', badge: 'recommended' }
+      { label: 'What is AFSM', translations: { zh: '什么是 AFSM' }, slug: 'guide/what-is-afsm' },
+      { label: 'Quick Start', translations: { zh: '快速上手' }, slug: 'guide/getting-started' },
+      {
+        label: 'DevTools Extension',
+        translations: { zh: 'DevTools 扩展' },
+        slug: 'advanced/devtools',
+        badge: { text: { en: 'Recommended', zh: '推荐' }, variant: 'tip' }
+      }
     ]
   },
   {
     label: 'Core Concepts',
+    translations: { zh: '核心概念' },
     items: [
-      { label: 'Core Concepts', slug: 'guide/core-concepts' },
-      { label: 'Changing State: @ChangeState', slug: 'guide/change-state' },
-      { label: 'Other Decorators', slug: 'guide/decorators' },
-      { label: 'Event System', slug: 'guide/events' },
-      { label: 'Error Handling', slug: 'guide/error-handling' },
-      { label: 'Visualizing the Diagram', slug: 'guide/visualization' }
+      { label: 'Core Concepts', translations: { zh: '核心概念' }, slug: 'guide/core-concepts' },
+      { label: 'Changing State: @ChangeState', translations: { zh: '状态变更 @ChangeState' }, slug: 'guide/change-state' },
+      { label: 'Other Decorators', translations: { zh: '其他装饰器' }, slug: 'guide/decorators' },
+      { label: 'Event System', translations: { zh: '事件系统' }, slug: 'guide/events' },
+      { label: 'Error Handling', translations: { zh: '错误处理' }, slug: 'guide/error-handling' },
+      { label: 'Visualizing the Diagram', translations: { zh: '可视化状态图' }, slug: 'guide/visualization' }
     ]
   },
   {
     label: 'API Reference',
+    translations: { zh: 'API 参考' },
     items: [
-      { label: 'Overview', slug: 'api' },
-      { label: 'FSM Class', slug: 'api/fsm' },
+      { label: 'Overview', translations: { zh: '总览' }, slug: 'api' },
+      { label: 'FSM Class', translations: { zh: 'FSM 类' }, slug: 'api/fsm' },
       { label: '@ChangeState', slug: 'api/change-state' },
       { label: '@ActionState', slug: 'api/action-state' },
       { label: '@Includes / @Excludes', slug: 'api/includes-excludes' },
       { label: 'MiddleState', slug: 'api/middle-state' },
       { label: 'FSMError', slug: 'api/fsm-error' },
       { label: 'tryChangeState', slug: 'api/try-change-state' },
-      { label: 'Types', slug: 'api/types' }
+      { label: 'Types', translations: { zh: '类型定义' }, slug: 'api/types' }
     ]
   },
   {
     label: 'Examples',
+    translations: { zh: '示例' },
     items: [
-      { label: 'Overview', slug: 'examples' },
-      { label: 'Connection', slug: 'examples/connection' },
-      { label: 'setTimeout Timer', slug: 'examples/settimeout' },
-      { label: 'setInterval Timer', slug: 'examples/setinterval' },
-      { label: 'Traffic Light', slug: 'examples/traffic-light' },
-      { label: 'Data Fetch', slug: 'examples/data-fetch' }
+      { label: 'Overview', translations: { zh: '总览' }, slug: 'examples' },
+      { label: 'Connection', translations: { zh: '连接管理' }, slug: 'examples/connection' },
+      { label: 'setTimeout Timer', translations: { zh: '定时器 setTimeout' }, slug: 'examples/settimeout' },
+      { label: 'setInterval Timer', translations: { zh: '定时器 setInterval' }, slug: 'examples/setinterval' },
+      { label: 'Traffic Light', translations: { zh: '红绿灯' }, slug: 'examples/traffic-light' },
+      { label: 'Data Fetch', translations: { zh: '数据请求' }, slug: 'examples/data-fetch' }
     ]
   },
   {
     label: 'Advanced',
+    translations: { zh: '进阶' },
     items: [
-      { label: 'Composing FSMs', slug: 'advanced/composition' },
-      { label: 'Abort & Interruption', slug: 'advanced/abort' },
-      { label: 'Sync Mode', slug: 'advanced/sync-mode' },
-      { label: 'Inheritance', slug: 'advanced/inheritance' },
-      { label: 'DevTools Extension', slug: 'advanced/devtools' },
-      { label: 'React Integration', slug: 'advanced/react-integration' },
-      { label: 'Vue Integration', slug: 'advanced/vue-integration' },
-      { label: 'Playground Internals', slug: 'advanced/playground-internals' }
+      { label: 'Composing FSMs', translations: { zh: '组合式状态机' }, slug: 'advanced/composition' },
+      { label: 'Abort & Interruption', translations: { zh: '中断与 abort' }, slug: 'advanced/abort' },
+      { label: 'Sync Mode', translations: { zh: '同步模式' }, slug: 'advanced/sync-mode' },
+      { label: 'Inheritance', translations: { zh: '继承' }, slug: 'advanced/inheritance' },
+      { label: 'React Integration', translations: { zh: 'React 集成' }, slug: 'advanced/react-integration' },
+      { label: 'Vue Integration', translations: { zh: 'Vue 集成' }, slug: 'advanced/vue-integration' },
+      { label: 'Playground Internals', translations: { zh: 'Playground 工作原理' }, slug: 'advanced/playground-internals' }
     ]
   },
   {
     label: 'Playground',
     items: [
-      { label: 'Online Playground', slug: 'playground', badge: 'new' }
+      {
+        label: 'Online Playground',
+        translations: { zh: '在线 Playground' },
+        slug: 'playground',
+        badge: { text: 'New', variant: 'success' }
+      }
     ]
   }
 ];
@@ -215,15 +163,14 @@ export default defineConfig({
         // defaultLocale aligns with the locale path (keeps URLs as /zh/...).
         zh: {
           label: '简体中文',
-          lang: 'zh',
-          sidebar: zhSidebar
+          lang: 'zh'
         },
         en: {
           label: 'English',
-          lang: 'en',
-          sidebar: enSidebar
+          lang: 'en'
         }
       },
+      sidebar,
       tableOfContents: false,
       pagination: true
     }),

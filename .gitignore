@@ -1,3 +1,18 @@
 node_modules
 .history
 .pnpm-store
+
+# Local / editor
+.DS_Store
+*.local
+
+# Playwright CLI captures
+.playwright-cli/
+
+# Docs site build & cache (Astro / leftover VitePress)
+docs/dist/
+docs/.astro/
+docs/.vitepress/
+
+# Local design assets (not part of the package)
+hero-fix.png
