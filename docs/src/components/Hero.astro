@@ -6,8 +6,9 @@ interface Props {
   playgroundLink: string;
   devtoolsText: string;
   devtoolsLink: string;
+  videoText: string;
 }
-const { tagline, ctaText, ctaLink, playgroundLink, devtoolsText, devtoolsLink } = Astro.props;
+const { tagline, ctaText, ctaLink, playgroundLink, devtoolsText, devtoolsLink, videoText } = Astro.props;
 ---
 
 <section class="hero not-content">
@@ -22,6 +23,7 @@ const { tagline, ctaText, ctaLink, playgroundLink, devtoolsText, devtoolsLink } 
       <a class="hero-btn hero-btn--primary" href={ctaLink}>{ctaText}</a>
       <a class="hero-btn hero-btn--alt" href={devtoolsLink}>{devtoolsText}</a>
       <a class="hero-btn hero-btn--alt" href={playgroundLink}>Playground</a>
+      <a class="hero-btn hero-btn--alt" href="https://www.bilibili.com/video/BV1kv4y1T7v4" target="_blank" rel="noopener">{videoText}</a>
       <a class="hero-btn hero-btn--alt" href="https://github.com/langhuihui/afsm" target="_blank" rel="noopener">GitHub</a>
     </div>
     <div class="hero-meta">

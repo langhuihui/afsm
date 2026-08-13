@@ -70,4 +70,4 @@ class Service extends FSM {
 - 任何「有限状态 + 异步转换」的业务流程
 - 需要可视化与可观测性的复杂状态机
 
-下一步前往[快速上手](./getting-started)写第一个状态机，或先[安装 DevTools](../advanced/devtools)。
+下一步前往[快速上手](./getting-started)写第一个状态机，或先[安装 DevTools](../advanced/devtools)。也可观看 [B 站视频教程](https://www.bilibili.com/video/BV1kv4y1T7v4)。

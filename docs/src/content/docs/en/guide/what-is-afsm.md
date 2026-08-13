@@ -70,4 +70,4 @@ When `fetch()` is called, AFSM will:
 - Any "finite state + async transition" business flow
 - Complex state machines that need visualization and observability
 
-Next, head to [Quick Start](./getting-started) to write your first state machine, or [install DevTools](../advanced/devtools) first.
+Next, head to [Quick Start](./getting-started) to write your first state machine, or [install DevTools](../advanced/devtools) first. You can also watch the [Bilibili video tutorial](https://www.bilibili.com/video/BV1kv4y1T7v4).
